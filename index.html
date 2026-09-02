@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Will01Mod Official - Game Mods & Mod Menu Store</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #0a0d14;
+      color: #e2e8f0;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0d14;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e2436;
+      border-radius: 4px;
+    }
+    .card-mod {
+      background: #121624;
+      border: 1px solid #1e2538;
+      border-radius: 1rem;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .card-mod:hover {
+      border-color: #3b4566;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+    .btn-purple {
+      background: linear-gradient(135deg, #635bff 0%, #4f46e5 100%);
+      transition: all 0.2s ease;
+    }
+    .btn-purple:hover {
+      background: linear-gradient(135deg, #726aff 0%, #5d53f5 100%);
+      box-shadow: 0 4px 20px -2px rgba(99, 91, 255, 0.4);
+    }
+    .pill-tag {
+      background-color: #171d2d;
+      border: 1px solid #232b42;
+      color: #94a3b8;
+    }
+    .plan-box {
+      background: #161b2c;
+      border: 1px solid #222a40;
+    }
+    .plan-box.selected {
+      border-color: #635bff;
+      background: #1c2238;
+    }
+  </style>
+</head>
+<body class="font-sans min-h-screen flex flex-col selection:bg-indigo-600 selection:text-white">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
+
+  <header class="sticky top-0 z-40 bg-[#0a0d14]/90 backdrop-blur-md border-b border-[#181e30]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Logo -->
+        <div class="flex items-center gap-3 cursor-pointer" onclick="resetAllFilters()">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-md shadow-indigo-500/20">
+            <i class="fa-solid fa-gamepad"></i>
+          </div>
+          <span class="font-extrabold text-white text-base sm:text-lg tracking-tight">
+            Will01Mod <span class="text-indigo-400 font-normal">Official</span>
+          </span>
+        </div>
+
+        <!-- Top Nav Links -->
+        <nav class="hidden md:flex items-center gap-6 text-xs text-slate-300 font-medium">
+          <a href="#" class="hover:text-white transition">Community</a>
+          <a href="#" class="hover:text-white transition">Price & Payment</a>
+          <a href="#" onclick="openTermsModal(event)" class="hover:text-white transition">Terms of Use</a>
+          
+          <!-- Dropdown Filter -->
+          <div class="relative">
+            <select id="game-type-select" onchange="handleGameTypeFilter(this.value)" class="bg-[#121624] border border-[#222a40] text-slate-200 text-xs px-3 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 cursor-pointer font-semibold uppercase">
+              <option value="ALL">Game Type: DEFAULT (ALL)</option>
+              <option value="VIP">Game Type: VIP MODS</option>
+              <option value="FREE">Game Type: FREE MODS</option>
+            </select>
+          </div>
+        </nav>
+
+        <!-- Admin Access Button -->
+        <div class="flex items-center gap-3">
+          <a 
+            href="admin.html" 
+            class="flex items-center gap-1.5 bg-[#181e30] hover:bg-[#222a40] text-slate-300 border border-[#28324e] px-3 py-1.5 rounded-lg text-xs font-semibold transition hover:text-white"
+            title="Kelola Mod Game (Admin Panel)"
+          >
+            <i class="fa-solid fa-user-gear text-indigo-400 text-xs"></i>
+            <span class="hidden sm:inline">Admin Panel</span>
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <section class="py-10 text-center relative border-b border-[#161b2c] bg-gradient-to-b from-[#0e121d] to-[#0a0d14]">
+    <div class="max-w-4xl mx-auto px-4">
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
+        Will01Mod Official
+      </h1>
+      
+      <!-- Status Counter Badge -->
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#121828] border border-[#1e2740] text-xs text-slate-300 mt-1">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span><strong id="mod-count-display" class="text-white">0</strong> List mods ready</span>
+      </div>
+
+      <!-- Search & Filter Controls Grid -->
+      <div class="mt-8 max-w-xl mx-auto space-y-3">
+        <!-- Search Box -->
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+          <input 
+            type="text" 
+            id="search-input"
+            oninput="handleSearch(this.value)"
+            placeholder="Search game name..."
+            class="w-full bg-[#121624] border border-[#20273b] rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
+          >
+        </div>
+
+        <!-- Tag Filter Dropdown -->
+        <div class="relative">
+          <select 
+            id="tag-filter-select"
+            onchange="handleTagFilter(this.value)"
+            class="w-full bg-[#121624] border border-[#20273b] rounded-xl px-3.5 py-2.5 text-xs text-slate-400 focus:outline-none focus:border-indigo-500 cursor-pointer"
+          >
+            <option value="ALL">Select tags...</option>
+            <option value="Strategy">Strategy</option>
+            <option value="Tower Defense">Tower Defense</option>
+            <option value="Idle RPG">Idle RPG</option>
+            <option value="Role Playing">Role Playing</option>
+            <option value="Single Player">Single Player</option>
+            <option value="Simulation">Simulation</option>
+            <option value="Anime">Anime</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    
+    <!-- Games Grid -->
+    <div id="games-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Injected dynamically via JS -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden text-center py-20">
+      <div class="w-14 h-14 rounded-full bg-[#141a2c] border border-[#202945] flex items-center justify-center mx-auto text-slate-500 text-xl mb-3">
+        <i class="fa-solid fa-ghost"></i>
+      </div>
+      <h3 class="text-sm font-bold text-slate-200">No Mods Found</h3>
+      <p class="text-xs text-slate-500 mt-1 max-w-xs mx-auto">Try searching for another game name or resetting your category filter.</p>
+      <button onclick="resetAllFilters()" class="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold">
+        Reset Search
+      </button>
+    </div>
+
+  </main>
+
+  <div class="fixed bottom-6 right-6 z-40 flex flex-col gap-3">
+    <a 
+      href="https://youtube.com" 
+      target="_blank" 
+      class="w-11 h-11 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-lg shadow-red-600/30 transition transform hover:scale-105"
+      title="YouTube Channel"
+    >
+      <i class="fa-brands fa-youtube text-lg"></i>
+    </a>
+    <a 
+      href="https://t.me" 
+      target="_blank" 
+      class="w-11 h-11 rounded-full bg-cyan-500 hover:bg-cyan-400 text-white flex items-center justify-center shadow-lg shadow-cyan-500/30 transition transform hover:scale-105"
+      title="Telegram Community"
+    >
+      <i class="fa-brands fa-telegram text-xl"></i>
+    </a>
+  </div>
+
+  <footer class="bg-[#080a10] border-t border-[#141826] py-6 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4">
+      <p>&copy; 2026 Will01Mod Official. All Rights Reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Buy Mod Modal -->
+  <div id="buy-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden items-center justify-center p-4">
+    <div class="bg-[#121624] border border-[#1e263d] rounded-2xl w-full max-w-md p-5 relative shadow-2xl text-xs">
+      
+      <button onclick="closeBuyModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-[#1c2338]">
+        <i class="fa-solid fa-xmark text-sm"></i>
+      </button>
+
+      <div class="flex items-start gap-3 mb-4">
+        <img id="buy-modal-icon" src="" class="w-12 h-12 rounded-xl object-cover bg-slate-800 border border-[#20283f]" alt="Game Icon">
+        <div>
+          <span class="text-[10px] text-slate-400 uppercase font-semibold block tracking-wider">YOU'RE PURCHASING</span>
+          <h3 id="buy-modal-title" class="text-sm font-bold text-white mt-0.5">Game Title</h3>
+          <div class="flex items-center gap-1.5 mt-1">
+            <span id="buy-modal-ver" class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#1b2135] text-cyan-400 border border-[#26304d]">1.0.0</span>
+            <span id="buy-modal-type" class="text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-indigo-600/30 text-indigo-300 border border-indigo-500/40">VIP</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">CHOOSE YOUR PLAN</span>
+        
+        <div class="grid grid-cols-2 gap-2.5">
+          <div 
+            id="plan-monthly" 
+            onclick="selectPlan('monthly')" 
+            class="plan-box selected p-3 rounded-xl cursor-pointer relative transition"
+          >
+            <div class="flex justify-between items-start">
+              <span class="text-[10px] font-bold text-slate-400 uppercase">MONTHLY</span>
+              <i id="check-monthly" class="fa-solid fa-circle-check text-indigo-500 text-xs"></i>
+            </div>
+            <div class="mt-2">
+              <span id="plan-monthly-price" class="text-base font-extrabold text-white">$20</span>
+              <span id="plan-monthly-rp" class="text-[10px] text-slate-400 font-mono"> / Rp 250k</span>
+            </div>
+            <p class="text-[10px] text-slate-500 mt-1">Per Bulan · All VIP games</p>
+          </div>
+
+          <div 
+            id="plan-lifetime" 
+            onclick="selectPlan('lifetime')" 
+            class="plan-box p-3 rounded-xl cursor-pointer relative transition"
+          >
+            <span class="absolute -top-2 right-2 text-[9px] font-extrabold bg-indigo-600 text-white px-1.5 py-0.5 rounded uppercase shadow">
+              BEST VALUE
+            </span>
+            <div class="flex justify-between items-start">
+              <span class="text-[10px] font-bold text-slate-400 uppercase">LIFETIME</span>
+              <i id="check-lifetime" class="fa-regular fa-circle text-slate-600 text-xs"></i>
+            </div>
+            <div class="mt-2">
+              <span id="plan-lifetime-price" class="text-base font-extrabold text-white">$150</span>
+              <span id="plan-lifetime-rp" class="text-[10px] text-slate-400 font-mono"> / Rp 2.2M</span>
+            </div>
+            <p class="text-[10px] text-slate-500 mt-1">One time · All VIP games</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-3 bg-[#171a24] border border-amber-500/20 rounded-xl mb-4 flex gap-2.5 items-start">
+        <i class="fa-solid fa-triangle-exclamation text-amber-400 text-xs mt-0.5 flex-shrink-0"></i>
+        <div>
+          <span class="font-bold text-amber-300 text-[11px] block">Before you proceed</span>
+          <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">
+            By continuing, you acknowledge that you have read and agree to our <a href="#" onclick="openTermsModal(event)" class="text-indigo-400 underline">Terms of Use</a>. All transactions are final and non-refundable.
+          </p>
+        </div>
+      </div>
+
+      <label class="flex items-center gap-2 cursor-pointer mb-4 text-slate-300 text-[11px]">
+        <input type="checkbox" id="terms-checkbox" onchange="handleTermsCheck(this.checked)" class="rounded bg-[#181e30] border-[#2a3452] text-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer">
+        <span>I have read and agree to the <a href="#" onclick="openTermsModal(event)" class="text-indigo-400 underline">Terms of Use</a>. I understand the risks involved.</span>
+      </label>
+
+      <button 
+        id="btn-agree-proceed" 
+        disabled 
+        onclick="proceedToPayment()" 
+        class="w-full py-2.5 rounded-xl font-bold text-xs text-slate-400 bg-indigo-600/30 cursor-not-allowed transition flex items-center justify-center gap-2 mb-2"
+      >
+        <i class="fa-solid fa-lock text-xs"></i>
+        <span>Agree to Terms to Continue</span>
+      </button>
+
+      <button 
+        onclick="openTermsModal(event)"
+        class="w-full py-2.5 rounded-xl font-semibold text-xs text-slate-300 bg-[#161c2d] hover:bg-[#1d253b] border border-[#242e47] transition flex items-center justify-center gap-1.5"
+      >
+        <i class="fa-solid fa-file-contract text-slate-400"></i>
+        <span>Read Full Terms of Use</span>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- QRIS Payment Modal -->
+  <div id="payment-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden items-center justify-center p-4">
+    <div class="bg-[#121624] border border-[#1e263d] rounded-2xl w-full max-w-sm p-5 text-center relative shadow-2xl">
+      <button onclick="closePaymentModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      
+      <div id="payment-step-qris">
+        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto mb-2 text-lg">
+          <i class="fa-solid fa-qrcode"></i>
+        </div>
+        <h3 class="font-bold text-sm text-white">QRIS Auto Confirm</h3>
+        <p class="text-[11px] text-slate-400 mt-0.5">Scan via GoPay, OVO, Dana, ShopeePay, or BCA</p>
+
+        <div class="my-4 p-3 bg-white rounded-xl inline-block shadow-lg">
+          <svg class="w-36 h-36 mx-auto" viewBox="0 0 100 100" fill="none">
+            <rect width="100" height="100" fill="white"/>
+            <rect x="10" y="10" width="24" height="24" fill="#0f172a" rx="3"/>
+            <rect x="14" y="14" width="16" height="16" fill="white" rx="2"/>
+            <rect x="18" y="18" width="8" height="8" fill="#4f46e5" rx="1"/>
+            <rect x="66" y="10" width="24" height="24" fill="#0f172a" rx="3"/>
+            <rect x="70" y="14" width="16" height="16" fill="white" rx="2"/>
+            <rect x="74" y="18" width="8" height="8" fill="#4f46e5" rx="1"/>
+            <rect x="10" y="66" width="24" height="24" fill="#0f172a" rx="3"/>
+            <rect x="14" y="70" width="16" height="16" fill="white" rx="2"/>
+            <rect x="18" y="74" width="8" height="8" fill="#4f46e5" rx="1"/>
+            <rect x="38" y="12" width="4" height="8" fill="#0f172a"/>
+            <rect x="46" y="12" width="14" height="4" fill="#0f172a"/>
+            <rect x="38" y="28" width="24" height="4" fill="#0f172a"/>
+            <rect x="44" y="38" width="12" height="6" fill="#4f46e5"/>
+            <rect x="62" y="40" width="26" height="4" fill="#0f172a"/>
+            <rect x="38" y="76" width="10" height="12" fill="#4f46e5"/>
+          </svg>
+        </div>
+
+        <div class="bg-[#171d2d] p-2.5 rounded-xl border border-[#222b42] text-xs mb-4">
+          <span class="text-slate-400 text-[10px] block">TOTAL TRANSFER AMOUNT:</span>
+          <span id="pay-amount" class="text-sm font-extrabold text-emerald-400 font-mono">$20 / Rp 250.000</span>
+        </div>
+
+        <button onclick="simulatePaymentDone()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-emerald-600/30">
+          Simulate Payment
+        </button>
+      </div>
+
+      <div id="payment-step-success" class="hidden py-3">
+        <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-2 text-2xl animate-bounce">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h3 class="font-bold text-base text-white">Mod VIP Unlocked!</h3>
+        <p class="text-[11px] text-slate-400 mt-1">Key license & direct download access sent.</p>
+        
+        <div class="my-4 p-3 bg-[#181f33] rounded-xl text-left border border-[#232d4a]">
+          <span class="text-[10px] text-slate-400 block uppercase font-mono">YOUR VIP KEY LICENSE:</span>
+          <code class="text-xs font-mono text-cyan-300 font-bold block my-1">WILL01-VIP-8921-X992</code>
+          <a id="download-mod-btn" href="#" target="_blank" class="mt-3 w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-download"></i> Download Mod APK
+          </a>
+        </div>
+
+        <button onclick="closePaymentModal()" class="w-full py-2 bg-[#1b2238] text-slate-300 rounded-xl text-xs font-semibold">
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAqJF91DDwhXt_tgha6uv_SM7ToZcZO_kQ",
+  authDomain: "mod-store-c24a3.firebaseapp.com",
+  projectId: "mod-store-c24a3",
+  storageBucket: "mod-store-c24a3.firebasestorage.app",
+  messagingSenderId: "319704239889",
+  appId: "1:319704239889:web:2e11077cb7ec7787bb86b0"
+};
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'will01mod-store';
+    let db = null;
+    let auth = null;
+
+    const INITIAL_GAMES = [
+      {
+        id: "MOD-001",
+        title: "Desert Warrior Action RPG Game",
+        version: "3.5.0",
+        latestVersion: "3.5.5",
+        type: "VIP",
+        playstoreUrl: "https://play.google.com/store/apps/details?id=com.desertwarrior.joygame",
+        image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80",
+        tags: ["Action RPG", "Role Playing", "PvP", "PvE", "Single Player"],
+        modFeatures: "Menu, God Mode, Unlimited Gems, Speed Game",
+        monthlyPrice: "$20",
+        monthlyRupiah: "Rp 250k",
+        lifetimePrice: "$150",
+        lifetimeRupiah: "Rp 2.2M",
+        downloadUrl: "https://github.com/example/mod-apk-desertwarrior"
+      },
+      {
+        id: "MOD-002",
+        title: "Wicked Defense",
+        version: "1.1.7",
+        latestVersion: "1.2.4",
+        type: "VIP",
+        playstoreUrl: "https://play.google.com/store/apps/details?id=com.supercell.clashofclans",
+        image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80",
+        tags: ["Single Player", "Stylized", "Strategy", "Tower Defense", "Immersive"],
+        modFeatures: "Menu, Auto Win, Speed Game",
+        monthlyPrice: "$20",
+        monthlyRupiah: "Rp 250k",
+        lifetimePrice: "$150",
+        lifetimeRupiah: "Rp 2.2M",
+        downloadUrl: "https://github.com/example/mod-apk-wicked"
+      },
+      {
+        id: "MOD-003",
+        title: "Cat & Soup",
+        version: "5.0.0",
+        latestVersion: "5.0.0",
+        type: "VIP",
+        playstoreUrl: "https://play.google.com/store/apps/details?id=com.hidea.cat",
+        image: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80",
+        tags: ["Offline", "Single Player", "Simulation", "Idle", "Cartoon"],
+        modFeatures: "Menu, Free Shop",
+        monthlyPrice: "$20",
+        monthlyRupiah: "Rp 250k",
+        lifetimePrice: "$150",
+        lifetimeRupiah: "Rp 2.2M",
+        downloadUrl: "https://github.com/example/mod-apk-catsoup"
+      }
+    ];
+
+    window.gamesState = JSON.parse(localStorage.getItem('will01_games')) || INITIAL_GAMES;
+
+    async function setupFirebase() {
+      if (typeof __firebase_config !== 'undefined') {
+        try {
+          const config = JSON.parse(__firebase_config);
+          const app = initializeApp(config);
+          auth = getAuth(app);
+          db = getFirestore(app);
+
+          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+          } else {
+            await signInAnonymously(auth);
+          }
+
+          const gamesRef = collection(db, 'artifacts', appId, 'public', 'data', 'games');
+          onSnapshot(gamesRef, (snapshot) => {
+            const fetched = [];
+            snapshot.forEach(doc => {
+              fetched.push({ id: doc.id, ...doc.data() });
+            });
+            if (fetched.length > 0) {
+              window.gamesState = fetched;
+              localStorage.setItem('will01_games', JSON.stringify(fetched));
+            }
+            window.renderGames();
+          }, (err) => {
+            console.error("Firestore Error:", err);
+            window.renderGames();
+          });
+          return;
+        } catch (err) {
+          console.warn("Fallback to LocalStorage:", err);
+        }
+      }
+      window.renderGames();
+    }
+
+    window.addEventListener('DOMContentLoaded', setupFirebase);
+  </script>
+
+  <script>
+    let searchQuery = '';
+    let selectedTag = 'ALL';
+    let selectedGameType = 'ALL';
+    let currentPurchasingMod = null;
+    let selectedPlan = 'monthly';
+
+    function filterGames() {
+      const games = window.gamesState || [];
+      return games.filter(game => {
+        const matchSearch = searchQuery === '' || 
+          game.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (game.modFeatures && game.modFeatures.toLowerCase().includes(searchQuery.toLowerCase()));
+        
+        const matchTag = selectedTag === 'ALL' || (game.tags && game.tags.includes(selectedTag));
+        const matchType = selectedGameType === 'ALL' || game.type === selectedGameType;
+
+        return matchSearch && matchTag && matchType;
+      });
+    }
+
+    window.renderGames = function() {
+      const container = document.getElementById('games-grid');
+      const empty = document.getElementById('empty-state');
+      const counter = document.getElementById('mod-count-display');
+      
+      const games = window.gamesState || [];
+      counter.innerText = games.length;
+
+      const filtered = filterGames();
+
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      empty.classList.add('hidden');
+      container.innerHTML = filtered.map(game => {
+        const displayImage = game.image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80';
+        const playStoreVer = game.latestVersion || game.version || '1.0.0';
+        const hasUpdate = game.latestVersion && game.latestVersion !== game.version;
+
+        return `
+          <div class="card-mod overflow-hidden flex flex-col justify-between relative">
+            <div>
+              <div class="relative h-52 sm:h-56 w-full overflow-hidden bg-slate-900">
+                <img 
+                  src="${displayImage}" 
+                  alt="${game.title}" 
+                  class="w-full h-full object-cover"
+                  onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80';"
+                >
+                <div class="absolute inset-0 bg-gradient-to-t from-[#121624] via-transparent to-transparent"></div>
+
+                ${hasUpdate ? `
+                  <div class="absolute top-3 left-3 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1.5 animate-pulse">
+                    <i class="fa-solid fa-arrows-rotate text-[11px]"></i>
+                    <span>UPDATE PLAYSTORE v${playStoreVer}</span>
+                  </div>
+                ` : ''}
+
+                <span class="absolute bottom-2.5 left-3 text-[10px] font-mono px-2 py-0.5 rounded bg-[#101524]/90 text-cyan-300 border border-[#202942]">
+                  Mod: v${game.version || '1.0.0'}
+                </span>
+
+                <span class="absolute bottom-2.5 right-3 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded ${game.type === 'FREE' ? 'bg-emerald-600/90' : 'bg-indigo-600/90'} text-white shadow">
+                  ${game.type || 'VIP'}
+                </span>
+              </div>
+
+              <div class="p-4 sm:p-5">
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <h3 class="font-extrabold text-base text-white tracking-tight leading-snug">
+                      ${game.title}
+                    </h3>
+                    ${hasUpdate ? `
+                      <span class="text-[10px] text-amber-400 font-semibold block mt-0.5">
+                        <i class="fa-solid fa-circle-exclamation text-[9px]"></i> Play Store terbaru: v${playStoreVer}
+                      </span>
+                    ` : ''}
+                  </div>
+                  <button 
+                    onclick="showPreviewToast('${game.title}')"
+                    class="px-2.5 py-1 bg-[#26161c] hover:bg-[#381a25] text-rose-300 border border-rose-500/30 rounded-lg text-[10px] font-semibold transition flex items-center gap-1 flex-shrink-0"
+                  >
+                    <i class="fa-solid fa-youtube text-rose-500"></i>
+                    <span>Preview</span>
+                  </button>
+                </div>
+
+                <div class="flex flex-wrap gap-1.5 mt-3">
+                  ${(game.tags || []).map(tag => `
+                    <span class="pill-tag text-[10px] px-2 py-0.5 rounded-md font-medium">
+                      ${tag}
+                    </span>
+                  `).join('')}
+                </div>
+
+                <div class="mt-3.5">
+                  <p class="text-xs text-slate-300 font-medium">
+                    ${game.modFeatures || 'Menu Mod Active'}
+                  </p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mt-4">
+                  <div class="p-2.5 rounded-xl bg-[#171c2e] border border-[#232b45]">
+                    <span class="text-[9px] font-bold text-slate-400 block uppercase">MONTHLY</span>
+                    <div class="text-xs font-extrabold text-white mt-0.5">
+                      ${game.monthlyPrice || '$20'} <span class="text-[10px] text-slate-400 font-normal">/ ${game.monthlyRupiah || 'Rp 250k'}</span>
+                    </div>
+                    <span class="text-[9px] text-slate-500 block mt-0.5">Per Bulan - All VIP games</span>
+                  </div>
+
+                  <div class="p-2.5 rounded-xl bg-[#171c2e] border border-[#232b45]">
+                    <span class="text-[9px] font-bold text-slate-400 block uppercase">LIFETIME</span>
+                    <div class="text-xs font-extrabold text-white mt-0.5">
+                      ${game.lifetimePrice || '$150'} <span class="text-[10px] text-slate-400 font-normal">/ ${game.lifetimeRupiah || 'Rp 2.2M'}</span>
+                    </div>
+                    <span class="text-[9px] text-slate-500 block mt-0.5">One time - All VIP games</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="p-4 sm:p-5 pt-0 space-y-2">
+              ${hasUpdate ? `
+                <button 
+                  onclick="requestUpdateNotice('${game.title}', '${playStoreVer}')"
+                  class="w-full py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 rounded-xl text-xs font-bold border border-amber-500/30 transition flex items-center justify-center gap-1.5"
+                >
+                  <i class="fa-solid fa-arrows-rotate text-amber-400 animate-spin"></i>
+                  <span>Request Update Mod ke v${playStoreVer}</span>
+                </button>
+              ` : ''}
+
+              <a 
+                href="${game.playstoreUrl || 'https://play.google.com/store'}" 
+                target="_blank"
+                class="w-full py-2 bg-[#171c2e] hover:bg-[#1f263f] text-slate-300 rounded-xl text-xs font-semibold border border-[#232b45] transition flex items-center justify-center gap-1.5"
+              >
+                <i class="fa-brands fa-google-play text-slate-400"></i>
+                <span>Original Play Store</span>
+              </a>
+
+              <button 
+                onclick="openBuyModal('${game.id}')"
+                class="w-full py-2.5 btn-purple text-white rounded-xl text-xs font-bold transition shadow-lg flex items-center justify-center gap-2 active:scale-[0.99]"
+              >
+                <i class="fa-solid fa-cart-shopping text-xs"></i>
+                <span>Buy Mod</span>
+              </button>
+            </div>
+
+          </div>
+        `;
+      }).join('');
+    };
+
+    function handleSearch(val) {
+      searchQuery = val;
+      renderGames();
+    }
+
+    function handleTagFilter(val) {
+      selectedTag = val;
+      renderGames();
+    }
+
+    function handleGameTypeFilter(val) {
+      selectedGameType = val;
+      renderGames();
+    }
+
+    function resetAllFilters() {
+      searchQuery = '';
+      selectedTag = 'ALL';
+      selectedGameType = 'ALL';
+      document.getElementById('search-input').value = '';
+      document.getElementById('tag-filter-select').value = 'ALL';
+      document.getElementById('game-type-select').value = 'ALL';
+      renderGames();
+    }
+
+    function openBuyModal(id) {
+      const games = window.gamesState || [];
+      const game = games.find(g => g.id === id);
+      if (!game) return;
+
+      currentPurchasingMod = game;
+      selectedPlan = 'monthly';
+
+      document.getElementById('buy-modal-title').innerText = game.title;
+      document.getElementById('buy-modal-ver').innerText = `v${game.version}`;
+      document.getElementById('buy-modal-type').innerText = game.type || 'VIP';
+      document.getElementById('buy-modal-icon').src = game.image;
+
+      document.getElementById('plan-monthly-price').innerText = game.monthlyPrice || '$20';
+      document.getElementById('plan-monthly-rp').innerText = ` / ${game.monthlyRupiah || 'Rp 250k'}`;
+      document.getElementById('plan-lifetime-price').innerText = game.lifetimePrice || '$150';
+      document.getElementById('plan-lifetime-rp').innerText = ` / ${game.lifetimeRupiah || 'Rp 2.2M'}`;
+
+      selectPlan('monthly');
+
+      const cb = document.getElementById('terms-checkbox');
+      cb.checked = false;
+      handleTermsCheck(false);
+
+      const modal = document.getElementById('buy-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeBuyModal() {
+      const modal = document.getElementById('buy-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function selectPlan(plan) {
+      selectedPlan = plan;
+      const monthlyBox = document.getElementById('plan-monthly');
+      const lifetimeBox = document.getElementById('plan-lifetime');
+      const checkM = document.getElementById('check-monthly');
+      const checkL = document.getElementById('check-lifetime');
+
+      if (plan === 'monthly') {
+        monthlyBox.classList.add('selected');
+        lifetimeBox.classList.remove('selected');
+        checkM.className = 'fa-solid fa-circle-check text-indigo-500 text-xs';
+        checkL.className = 'fa-regular fa-circle text-slate-600 text-xs';
+      } else {
+        lifetimeBox.classList.add('selected');
+        monthlyBox.classList.remove('selected');
+        checkL.className = 'fa-solid fa-circle-check text-indigo-500 text-xs';
+        checkM.className = 'fa-regular fa-circle text-slate-600 text-xs';
+      }
+    }
+
+    function handleTermsCheck(checked) {
+      const btn = document.getElementById('btn-agree-proceed');
+      if (checked) {
+        btn.disabled = false;
+        btn.className = "w-full py-2.5 rounded-xl font-bold text-xs text-white btn-purple cursor-pointer shadow-lg transition flex items-center justify-center gap-2 mb-2 active:scale-95";
+        btn.innerHTML = `<i class="fa-solid fa-arrow-right text-xs"></i><span>Proceed to Payment</span>`;
+      } else {
+        btn.disabled = true;
+        btn.className = "w-full py-2.5 rounded-xl font-bold text-xs text-slate-400 bg-indigo-600/30 cursor-not-allowed transition flex items-center justify-center gap-2 mb-2";
+        btn.innerHTML = `<i class="fa-solid fa-lock text-xs"></i><span>Agree to Terms to Continue</span>`;
+      }
+    }
+
+    function proceedToPayment() {
+      closeBuyModal();
+      
+      const payDisplay = document.getElementById('pay-amount');
+      if (selectedPlan === 'monthly') {
+        payDisplay.innerText = `${currentPurchasingMod.monthlyPrice || '$20'} / ${currentPurchasingMod.monthlyRupiah || 'Rp 250k'}`;
+      } else {
+        payDisplay.innerText = `${currentPurchasingMod.lifetimePrice || '$150'} / ${currentPurchasingMod.lifetimeRupiah || 'Rp 2.2M'}`;
+      }
+
+      document.getElementById('download-mod-btn').href = currentPurchasingMod.downloadUrl || '#';
+      document.getElementById('payment-step-qris').classList.remove('hidden');
+      document.getElementById('payment-step-success').classList.add('hidden');
+
+      const pModal = document.getElementById('payment-modal');
+      pModal.classList.remove('hidden');
+      pModal.classList.add('flex');
+    }
+
+    function closePaymentModal() {
+      const pModal = document.getElementById('payment-modal');
+      pModal.classList.add('hidden');
+      pModal.classList.remove('flex');
+    }
+
+    function simulatePaymentDone() {
+      document.getElementById('payment-step-qris').classList.add('hidden');
+      document.getElementById('payment-step-success').classList.remove('hidden');
+      showToast("Payment verified! VIP License activated.", "success");
+    }
+
+    function openTermsModal(e) {
+      if (e) e.preventDefault();
+      const modal = document.getElementById('terms-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeTermsModal() {
+      const modal = document.getElementById('terms-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function requestUpdateNotice(title, latestVer) {
+      showToast(`Request update v${latestVer} untuk "${title}" dikirim ke Admin!`, "success");
+    }
+
+    function showPreviewToast(title) {
+      showToast(`Membuka YouTube gameplay preview untuk "${title}"...`, "info");
+    }
+
+    function showToast(message, type = "info") {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      let icon = "fa-circle-info text-cyan-400";
+      if (type === "success") icon = "fa-circle-check text-emerald-400";
+
+      toast.className = `pointer-events-auto flex items-center gap-2.5 bg-[#121624] border border-[#20283f] text-slate-100 text-xs px-4 py-3 rounded-xl shadow-2xl backdrop-blur-md transform translate-y-2 opacity-0 transition duration-200`;
+      toast.innerHTML = `<i class="fa-solid ${icon}"></i><span>${message}</span>`;
+
+      container.appendChild(toast);
+      
+      setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 200);
+      }, 3000);
+    }
+
+    window.handleSearch = handleSearch;
+    window.handleTagFilter = handleTagFilter;
+    window.handleGameTypeFilter = handleGameTypeFilter;
+    window.resetAllFilters = resetAllFilters;
+    window.openBuyModal = openBuyModal;
+    window.closeBuyModal = closeBuyModal;
+    window.selectPlan = selectPlan;
+    window.handleTermsCheck = handleTermsCheck;
+    window.proceedToPayment = proceedToPayment;
+    window.closePaymentModal = closePaymentModal;
+    window.simulatePaymentDone = simulatePaymentDone;
+    window.openTermsModal = openTermsModal;
+    window.closeTermsModal = closeTermsModal;
+    window.requestUpdateNotice = requestUpdateNotice;
+    window.showPreviewToast = showPreviewToast;
+  </script>
+</body>
+</html>
