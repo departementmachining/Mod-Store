@@ -65,15 +65,7 @@ module.exports = async (req, res) => {
                 tags.push(parsed.genre);
               }
             }
-            break;
-          }
-        } catch (e) {
-          // Fallback parsing
-        }
-      }
-    }
-
-    // 2. Ekstraksi Genre / Tag dari Tag HTML Play Store
+    // 2. Ekstraksi Genre / Tag / Topic Chips dari HTML Play Store
     const genreRegexp = /itemprop="genre"[^>]*>([^<]+)</gi;
     let matchGenre;
     while ((matchGenre = genreRegexp.exec(html)) !== null) {
@@ -81,11 +73,19 @@ module.exports = async (req, res) => {
       if (g && !tags.includes(g)) tags.push(g);
     }
 
-    const categoryLinkRegexp = /\/store\/apps\/category\/GAME_[A-Z_]+[^>]*>[\s\S]*?<span[^>]*>([^<]+)<\/span>/gi;
-    let matchCatLink;
-    while ((matchCatLink = categoryLinkRegexp.exec(html)) !== null) {
-      const g = matchCatLink[1].trim();
-      if (g && !tags.includes(g)) tags.push(g);
+    // Ekstraksisemua chip tag (Category, Topic, Sub-genre) dari link Play Store
+    const chipLinkRegexp = /<a[^>]*href="\/store\/apps\/(?:category|topic|stream|search)[^"]*"[^>]*>[\s\S]*?<span[^>]*>([^<]+)<\/span>/gi;
+    let matchChipLink;
+    while ((matchChipLink = chipLinkRegexp.exec(html)) !== null) {
+      const chipText = matchChipLink[1].trim();
+      if (chipText && 
+          chipText.length > 1 && 
+          chipText.length < 30 && 
+          !chipText.includes('http') && 
+          !chipText.toLowerCase().includes('google') &&
+          !tags.includes(chipText)) {
+        tags.push(chipText);
+      }
     }
 
     // 3. Fallback Judul
@@ -118,26 +118,26 @@ module.exports = async (req, res) => {
     if (!version) {
       const verMatch = html.match(/\[\[\["(\d+\.\d+[\.\d]*)"\]/) ||
                        html.match(/"softwareVersion"\s*:\s*"([^"]+)"/i) ||
-                       html.match(/Version\s*(\d+\.\d+[\.\d]*)/i) ||
-                       html.match(/v?(\d+\.\d+\.\d+|\d+\.\d+)/);
-      if (verMatch && verMatch[1]) {
-        version = verMatch[1].trim();
-      }
-    }
-
-    // 6. Detection Kata Kunci Genre jika tags masih kosong
-    if (tags.length === 0) {
-      const combinedText = (title + ' ' + html).toLowerCase();
-      const knownGenres = ['Action RPG', 'Role Playing', 'Strategy', 'Tower Defense', 'Idle RPG', 'Single Player', 'Simulation', 'Anime', 'Casual', 'PvP', 'Offline', 'Co-op', 'Stylized'];
-      knownGenres.forEach(kg => {
-        if (combinedText.includes(kg.toLowerCase()) && !tags.includes(kg)) {
-          tags.push(kg);
+    // 6. Detection Kata Kunci Genre jika tags masih kosong atau kurang
+    const combinedText = (title + ' ' + html).toLowerCase();
+    const knownGenres = [
+      'RPG', 'Role Playing', 'Monster', 'Single player', 'Single Player', 
+      'Roguelike', 'Immersive', 'Stylized', 'Bergaya unik', 'Action RPG', 
+      'Strategy', 'Tower Defense', 'Idle RPG', 'Simulation', 'Anime', 
+      'Casual', 'PvP', 'Offline', 'Co-op'
+    ];
+    knownGenres.forEach(kg => {
+      if (combinedText.includes(kg.toLowerCase())) {
+        // Normalisasi kapitalisasi
+        const formattedTag = kg === 'Bergaya unik' ? 'Stylized' : kg;
+        if (!tags.some(t => t.toLowerCase() === formattedTag.toLowerCase())) {
+          tags.push(formattedTag);
         }
-      });
-    }
+      }
+    });
 
     if (tags.length === 0) {
-      tags = ['Action RPG', 'Single Player'];
+      tags = ['RPG', 'Single player'];
     }
 
     return res.status(200).json({
