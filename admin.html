@@ -753,19 +753,137 @@
       }
     }
 
-    function autoSyncPlayStoreData(url, forceNotify = false) {
-      if (!url || !url.trim()) return;
-      showToast("Syncing data dari Play Store...", "info");
-      setTimeout(() => {
-        if (forceNotify) showToast("Metadata Play Store berhasil ditarik!", "success");
-      }, 500);
+    async function autoSyncPlayStoreData(url, forceNotify = false) {
+      if (!url || !url.trim()) {
+        showToast("Masukkan URL Google Play Store terlebih dahulu!", "info");
+        return;
+      }
+
+      const cleanUrl = url.trim();
+      showToast("Mengambil metadata & versi dari Google Play Store...", "info");
+
+      try {
+        // 1. Ambil metadata cepat (Judul, Gambar, Deskripsi) via Microlink API
+        const microRes = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(cleanUrl)}`);
+        const microData = await microRes.json();
+
+        let title = "";
+        let image = "";
+        let description = "";
+
+        if (microData.status === "success" && microData.data) {
+          if (microData.data.title) {
+            title = microData.data.title
+              .replace(/\s*-\s*Apps on Google Play.*/i, "")
+              .replace(/\s*-\s*Aplikasi di Google Play.*/i, "")
+              .trim();
+          }
+          if (microData.data.image && microData.data.image.url) {
+            image = microData.data.image.url;
+          }
+          if (microData.data.description) {
+            description = microData.data.description;
+          }
+        }
+
+        // 2. Ambil HTML via AllOrigins CORS proxy untuk ekstrak softwareVersion
+        let detectedVersion = "";
+        try {
+          const htmlRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(cleanUrl + '&hl=en&gl=US')}`);
+          const htmlJson = await htmlRes.json();
+          const html = htmlJson.contents || "";
+
+          const verMatch = html.match(/"softwareVersion"\s*:\s*"([^"]+)"/i) ||
+                           html.match(/\[\[\["(\d+\.\d+[\.\d]*)"\]/) ||
+                           html.match(/Version\s*(\d+\.\d+[\.\d]*)/i);
+
+          if (verMatch && verMatch[1]) {
+            detectedVersion = verMatch[1].trim();
+          }
+        } catch (e) {
+          console.warn("Scrape HTML error:", e);
+        }
+
+        // Fallback pencarian nomor versi dari deskripsi/judul
+        if (!detectedVersion && (title || description)) {
+          const titleVerMatch = (title + " " + description).match(/v?(\d+\.\d+\.\d+|\d+\.\d+)/);
+          if (titleVerMatch) {
+            detectedVersion = titleVerMatch[1];
+          }
+        }
+
+        // Masukkan data hasil sync ke kolom-kolom Form Modal
+        if (title) document.getElementById('input-title').value = title;
+        if (detectedVersion) {
+          document.getElementById('input-latest-version').value = detectedVersion;
+          if (!document.getElementById('input-version').value) {
+            document.getElementById('input-version').value = detectedVersion;
+          }
+        }
+
+        // Deteksi Otomatis Tag Kategori
+        if (description || title) {
+          const keywords = ["Strategy", "Action", "RPG", "Tower Defense", "Idle", "Simulation", "Single Player", "Role Playing", "Anime", "PvP"];
+          const matchedTags = keywords.filter(k => 
+            (title + " " + description).toLowerCase().includes(k.toLowerCase())
+          );
+          if (matchedTags.length > 0) {
+            document.getElementById('input-tags').value = matchedTags.join(", ");
+          }
+        }
+
+        showToast(`Sync Berhasil! ${title ? title : ''} ${detectedVersion ? '(v' + detectedVersion + ')' : ''}`, "success");
+
+      } catch (err) {
+        console.error("Auto Sync Error:", err);
+        showToast("Gagal mengambil data Play Store. Silakan isi data secara manual.", "info");
+      }
     }
 
-    function checkAllPlayStoreUpdates() {
-      showToast("Memeriksa versi terbaru Play Store untuk semua game...", "info");
-      setTimeout(() => {
-        showToast("Pemeriksaan versi selesai!", "success");
-      }, 1000);
+    async function checkAllPlayStoreUpdates() {
+      const games = window.adminGamesState || [];
+      if (games.length === 0) {
+        showToast("Tidak ada game untuk diperiksa.", "info");
+        return;
+      }
+
+      showToast("Memeriksa versi Play Store untuk semua game...", "info");
+      let updatedCount = 0;
+
+      for (let game of games) {
+        if (!game.playstoreUrl) continue;
+        try {
+          const htmlRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(game.playstoreUrl + '&hl=en&gl=US')}`);
+          const htmlJson = await htmlRes.json();
+          const html = htmlJson.contents || "";
+
+          const verMatch = html.match(/"softwareVersion"\s*:\s*"([^"]+)"/i) ||
+                           html.match(/\[\[\["(\d+\.\d+[\.\d]*)"\]/) ||
+                           html.match(/Version\s*(\d+\.\d+[\.\d]*)/i);
+
+          if (verMatch && verMatch[1]) {
+            const newVersion = verMatch[1].trim();
+            if (newVersion !== game.latestVersion) {
+              game.latestVersion = newVersion;
+              updatedCount++;
+              if (typeof window.saveGameToFirestore === 'function') {
+                window.saveGameToFirestore(game);
+              }
+            }
+          }
+        } catch (e) {
+          console.warn(`Gagal check update untuk ${game.title}:`, e);
+        }
+      }
+
+      localStorage.setItem('will01_games', JSON.stringify(games));
+      renderAdminTable();
+      
+      if (updatedCount > 0) {
+        showToast(`Ditemukan ${updatedCount} game dengan versi Play Store baru!`, "success");
+      } else {
+        showToast("Pemeriksaan selesai! Semua versi sudah up-to-date.", "success");
+      }
     }
 
     function openSettingsModal() {
