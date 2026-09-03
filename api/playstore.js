@@ -65,6 +65,13 @@ module.exports = async (req, res) => {
                 tags.push(parsed.genre);
               }
             }
+          }
+        } catch (e) {
+          // ignore single json block parse error
+        }
+      }
+    }
+
     // 2. Ekstraksi Genre / Tag / Topic Chips dari HTML Play Store
     const genreRegexp = /itemprop="genre"[^>]*>([^<]+)</gi;
     let matchGenre;
@@ -118,7 +125,13 @@ module.exports = async (req, res) => {
     if (!version) {
       const verMatch = html.match(/\[\[\["(\d+\.\d+[\.\d]*)"\]/) ||
                        html.match(/"softwareVersion"\s*:\s*"([^"]+)"/i) ||
-    // 6. Detection Kata Kunci Genre jika tags masih kosong atau kurang
+                       html.match(/\["(\d+\.\d+\.\d+[^"]*)"\]/);
+      if (verMatch) {
+        version = verMatch[1];
+      }
+    }
+
+    // 6. Detection Kata Kunci Genre jika tags masih kurang
     const combinedText = (title + ' ' + html).toLowerCase();
     const knownGenres = [
       'RPG', 'Role Playing', 'Monster', 'Single player', 'Single Player', 
@@ -128,7 +141,6 @@ module.exports = async (req, res) => {
     ];
     knownGenres.forEach(kg => {
       if (combinedText.includes(kg.toLowerCase())) {
-        // Normalisasi kapitalisasi
         const formattedTag = kg === 'Bergaya unik' ? 'Stylized' : kg;
         if (!tags.some(t => t.toLowerCase() === formattedTag.toLowerCase())) {
           tags.push(formattedTag);
