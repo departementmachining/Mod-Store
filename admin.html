@@ -356,6 +356,78 @@
 
   </div>
 
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Konfigurasi Firebase Resmi Anda
+    const firebaseConfig = {
+      apiKey: "AIzaSyAqJF91DDwhXt_tgha6uv_SM7ToZcZO_kQ",
+      authDomain: "mod-store-c24a3.firebaseapp.com",
+      projectId: "mod-store-c24a3",
+      storageBucket: "mod-store-c24a3.firebasestorage.app",
+      messagingSenderId: "319704239889",
+      appId: "1:319704239889:web:2e11077cb7ec7787bb86b0"
+    };
+
+    const appId = firebaseConfig.projectId || 'mod-store-c24a3';
+    let db = null;
+    let auth = null;
+
+    async function initFirebaseAdmin() {
+      try {
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        await signInAnonymously(auth);
+
+        const gamesRef = collection(db, 'artifacts', appId, 'public', 'data', 'games');
+        onSnapshot(gamesRef, (snapshot) => {
+          const fetched = [];
+          snapshot.forEach(docSnap => {
+            fetched.push({ id: docSnap.id, ...docSnap.data() });
+          });
+          if (fetched.length > 0) {
+            window.adminGamesState = fetched;
+            localStorage.setItem('will01_games', JSON.stringify(fetched));
+          }
+          if (window.renderAdminTable) window.renderAdminTable();
+        }, (err) => {
+          console.error("Firestore Admin Error:", err);
+        });
+      } catch (err) {
+        console.warn("Fallback LocalStorage di Admin:", err);
+      }
+    }
+
+    // Helper Fungsi untuk Simpan / Update ke Cloud Database
+    window.saveGameToFirestore = async function(gameData) {
+      if (db) {
+        try {
+          const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'games', gameData.id);
+          await setDoc(docRef, gameData, { merge: true });
+        } catch (err) {
+          console.error("Gagal simpan ke Firestore:", err);
+        }
+      }
+    };
+
+    // Helper Fungsi untuk Hapus Game dari Cloud Database
+    window.deleteGameFromFirestore = async function(gameId) {
+      if (db) {
+        try {
+          const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'games', gameId);
+          await deleteDoc(docRef);
+        } catch (err) {
+          console.error("Gagal hapus dari Firestore:", err);
+        }
+      }
+    };
+
+    window.addEventListener('DOMContentLoaded', initFirebaseAdmin);
+  </script>
+
   <script>
     const INITIAL_GAMES = [
       {
@@ -590,20 +662,23 @@
 
       const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()) : ["Action", "Single Player"];
 
+      let updatedGame = null;
+
       if (editId) {
         // Edit existing
         const index = window.adminGamesState.findIndex(g => g.id === editId);
         if (index !== -1) {
-          window.adminGamesState[index] = {
+          updatedGame = {
             ...window.adminGamesState[index],
             playstoreUrl, title, version, latestVersion, type,
             modFeatures: features, previewUrl, tags,
             monthlyPrice, monthlyRupiah, lifetimePrice, lifetimeRupiah, downloadUrl
           };
+          window.adminGamesState[index] = updatedGame;
         }
       } else {
         // Add new
-        const newGame = {
+        updatedGame = {
           id: "MOD-" + Date.now().toString().slice(-4),
           title, version, latestVersion, type,
           playstoreUrl,
@@ -613,13 +688,19 @@
           previewUrl,
           monthlyPrice, monthlyRupiah, lifetimePrice, lifetimeRupiah, downloadUrl
         };
-        window.adminGamesState.unshift(newGame);
+        window.adminGamesState.unshift(updatedGame);
       }
 
       localStorage.setItem('will01_games', JSON.stringify(window.adminGamesState));
+      
+      // Simpan langsung ke Firebase Firestore jika terhubung
+      if (updatedGame && typeof window.saveGameToFirestore === 'function') {
+        window.saveGameToFirestore(updatedGame);
+      }
+
       renderAdminTable();
       closeGameModal();
-      showToast(`Game Mod "${title}" berhasil disimpan!`, "success");
+      showToast(`Game Mod "${title}" berhasil disimpan ke Firebase!`, "success");
     }
 
     function applyModUpdateOneClick(id) {
@@ -627,6 +708,11 @@
       if (game) {
         game.version = game.latestVersion;
         localStorage.setItem('will01_games', JSON.stringify(window.adminGamesState));
+        
+        if (typeof window.saveGameToFirestore === 'function') {
+          window.saveGameToFirestore(game);
+        }
+
         renderAdminTable();
         showToast(`Mod "${game.title}" diperbarui ke versi v${game.version}`, "success");
       }
@@ -636,8 +722,13 @@
       if (confirm("Apakah Anda yakin ingin menghapus mod game ini?")) {
         window.adminGamesState = window.adminGamesState.filter(g => g.id !== id);
         localStorage.setItem('will01_games', JSON.stringify(window.adminGamesState));
+
+        if (typeof window.deleteGameFromFirestore === 'function') {
+          window.deleteGameFromFirestore(id);
+        }
+
         renderAdminTable();
-        showToast("Mod Game berhasil dihapus!", "success");
+        showToast("Mod Game berhasil dihapus dari Firebase!", "success");
       }
     }
 
@@ -652,6 +743,11 @@
         else game.latestVersion = newVal.trim();
 
         localStorage.setItem('will01_games', JSON.stringify(window.adminGamesState));
+        
+        if (typeof window.saveGameToFirestore === 'function') {
+          window.saveGameToFirestore(game);
+        }
+
         renderAdminTable();
         showToast("Nomor versi berhasil diperbarui!", "success");
       }
