@@ -414,7 +414,17 @@
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'will01mod-store';
+    // Konfigurasi Firebase Resmi Anda
+    const firebaseConfig = {
+      apiKey: "AIzaSyAqJF91DDwhXt_tgha6uv_SM7ToZcZO_kQ",
+      authDomain: "mod-store-c24a3.firebaseapp.com",
+      projectId: "mod-store-c24a3",
+      storageBucket: "mod-store-c24a3.firebasestorage.app",
+      messagingSenderId: "319704239889",
+      appId: "1:319704239889:web:2e11077cb7ec7787bb86b0"
+    };
+
+    const appId = firebaseConfig.projectId || 'mod-store-c24a3';
     let db = null;
     let auth = null;
 
@@ -472,35 +482,32 @@
     window.gamesState = JSON.parse(localStorage.getItem('will01_games')) || INITIAL_GAMES;
 
     async function setupFirebase() {
-      if (typeof __firebase_config !== 'undefined') {
-        try {
-          const config = JSON.parse(__firebase_config);
-          const app = initializeApp(config);
-          auth = getAuth(app);
-          db = getFirestore(app);
-          await signInAnonymously(auth);
+      try {
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        await signInAnonymously(auth);
 
-          const gamesRef = collection(db, 'artifacts', appId, 'public', 'data', 'games');
-          onSnapshot(gamesRef, (snapshot) => {
-            const fetched = [];
-            snapshot.forEach(doc => {
-              fetched.push({ id: doc.id, ...doc.data() });
-            });
-            if (fetched.length > 0) {
-              window.gamesState = fetched;
-              localStorage.setItem('will01_games', JSON.stringify(fetched));
-            }
-            window.renderGames();
-          }, (err) => {
-            console.error("Firestore Error:", err);
-            window.renderGames();
+        // Path penyimpanan publik Firestore untuk sinkronisasi real-time
+        const gamesRef = collection(db, 'artifacts', appId, 'public', 'data', 'games');
+        onSnapshot(gamesRef, (snapshot) => {
+          const fetched = [];
+          snapshot.forEach(docSnap => {
+            fetched.push({ id: docSnap.id, ...docSnap.data() });
           });
-          return;
-        } catch (err) {
-          console.warn("Fallback to LocalStorage:", err);
-        }
+          if (fetched.length > 0) {
+            window.gamesState = fetched;
+            localStorage.setItem('will01_games', JSON.stringify(fetched));
+          }
+          window.renderGames();
+        }, (err) => {
+          console.error("Firestore Error:", err);
+          window.renderGames();
+        });
+      } catch (err) {
+        console.warn("Fallback to LocalStorage:", err);
+        window.renderGames();
       }
-      window.renderGames();
     }
 
     window.addEventListener('DOMContentLoaded', setupFirebase);
