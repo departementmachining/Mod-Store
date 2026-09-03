@@ -121,7 +121,6 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         
-        <!-- Logo -->
         <div class="flex items-center gap-3 cursor-pointer" onclick="resetAllFilters()">
           <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-md shadow-indigo-500/20">
             <i class="fa-solid fa-gamepad"></i>
@@ -131,15 +130,12 @@
           </span>
         </div>
 
-        <!-- Top Nav Links -->
         <nav class="hidden md:flex items-center gap-6 text-xs text-slate-300 font-medium">
           <button onclick="filterByNavPlan('ALL')" id="nav-btn-all" class="text-indigo-400 font-bold transition">All Mods</button>
           <button onclick="filterByNavPlan('MONTHLY')" id="nav-btn-monthly" class="hover:text-white transition">VIP Monthly</button>
           <button onclick="filterByNavPlan('LIFETIME')" id="nav-btn-lifetime" class="hover:text-white transition">VIP Lifetime</button>
-          
           <a href="#" onclick="openTermsModal(event)" class="hover:text-white transition">Terms of Use</a>
           
-          <!-- Dropdown Filter -->
           <div class="relative">
             <select id="game-type-select" onchange="handleGameTypeFilter(this.value)" class="bg-[#121624] border border-[#222a40] text-slate-200 text-xs px-3 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 cursor-pointer font-semibold uppercase">
               <option value="ALL">Type: DEFAULT (ALL)</option>
@@ -149,7 +145,6 @@
           </div>
         </nav>
 
-        <!-- Right Header Action -->
         <div class="flex items-center gap-2">
           <a href="admin.html" class="flex items-center gap-1.5 bg-[#181e30] hover:bg-[#222a40] text-slate-200 border border-[#28324e] px-3 py-1.5 rounded-lg text-xs font-semibold transition">
             <i class="fa-solid fa-user-shield text-indigo-400 text-xs"></i>
@@ -167,15 +162,12 @@
         Will01Mod Official
       </h1>
       
-      <!-- Status Counter Badge -->
       <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#121828] border border-[#1e2740] text-xs text-slate-300 mt-1">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
         <span><strong id="mod-count-display" class="text-white">0</strong> List mods ready</span>
       </div>
 
-      <!-- Search & Filter Controls Grid -->
       <div class="mt-8 max-w-xl mx-auto space-y-3">
-        <!-- Search Box -->
         <div class="relative">
           <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
           <input 
@@ -187,7 +179,6 @@
           >
         </div>
 
-        <!-- Tag Filter Dropdown -->
         <div class="relative">
           <select 
             id="tag-filter-select"
@@ -210,13 +201,10 @@
   </section>
 
   <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-    
-    <!-- Games Grid -->
     <div id="games-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Injected dynamically via JS -->
+      <!-- Injected dynamically -->
     </div>
 
-    <!-- Empty State -->
     <div id="empty-state" class="hidden text-center py-20">
       <div class="w-14 h-14 rounded-full bg-[#141a2c] border border-[#202945] flex items-center justify-center mx-auto text-slate-500 text-xl mb-3">
         <i class="fa-solid fa-ghost"></i>
@@ -227,28 +215,7 @@
         Reset Search
       </button>
     </div>
-
   </main>
-
-  <!-- Floating Social Buttons -->
-  <div class="fixed bottom-6 right-6 z-40 flex flex-col gap-3">
-    <a 
-      href="https://youtube.com" 
-      target="_blank" 
-      class="w-11 h-11 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-lg shadow-red-600/30 transition transform hover:scale-105"
-      title="YouTube Channel"
-    >
-      <i class="fa-brands fa-youtube text-lg"></i>
-    </a>
-    <a 
-      href="https://t.me" 
-      target="_blank" 
-      class="w-11 h-11 rounded-full bg-cyan-500 hover:bg-cyan-400 text-white flex items-center justify-center shadow-lg shadow-cyan-500/30 transition transform hover:scale-105"
-      title="Telegram Community"
-    >
-      <i class="fa-brands fa-telegram text-xl"></i>
-    </a>
-  </div>
 
   <footer class="bg-[#080a10] border-t border-[#141826] py-6 text-center text-xs text-slate-500">
     <div class="max-w-7xl mx-auto px-4">
@@ -259,12 +226,10 @@
   <div id="buy-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden items-center justify-center p-4">
     <div class="bg-[#121624] border border-[#1e263d] rounded-2xl w-full max-w-md p-5 relative shadow-2xl text-xs">
       
-      <!-- Close Button -->
       <button onclick="closeBuyModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-[#1c2338]">
         <i class="fa-solid fa-xmark text-sm"></i>
       </button>
 
-      <!-- Purchasing Header -->
       <div class="flex items-start gap-3 mb-4">
         <img id="buy-modal-icon" src="" class="w-12 h-12 rounded-xl object-cover bg-slate-800 border border-[#20283f]" alt="Game Icon">
         <div>
@@ -277,12 +242,10 @@
         </div>
       </div>
 
-      <!-- Choose Plan Options Grid -->
       <div class="mb-4">
         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">CHOOSE YOUR PLAN</span>
         
         <div class="grid grid-cols-2 gap-2.5">
-          <!-- Monthly Plan -->
           <div 
             id="plan-monthly" 
             onclick="selectPlan('monthly')" 
@@ -299,7 +262,6 @@
             <p class="text-[10px] text-slate-500 mt-1">Per Bulan · All VIP games</p>
           </div>
 
-          <!-- Lifetime Plan -->
           <div 
             id="plan-lifetime" 
             onclick="selectPlan('lifetime')" 
@@ -321,7 +283,6 @@
         </div>
       </div>
 
-      <!-- Disclaimer Warning Box -->
       <div class="p-3 bg-[#171a24] border border-amber-500/20 rounded-xl mb-4 flex gap-2.5 items-start">
         <i class="fa-solid fa-triangle-exclamation text-amber-400 text-xs mt-0.5 flex-shrink-0"></i>
         <div>
@@ -332,19 +293,16 @@
         </div>
       </div>
 
-      <!-- Terms Checkbox -->
       <label class="flex items-center gap-2 cursor-pointer mb-4 text-slate-300 text-[11px]">
         <input type="checkbox" id="terms-checkbox" onchange="handleTermsCheck(this.checked)" class="rounded bg-[#181e30] border-[#2a3452] text-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer">
         <span>I have read and agree to the <a href="#" onclick="openTermsModal(event)" class="text-indigo-400 underline">Terms of Use</a>. I understand the risks involved.</span>
       </label>
 
-      <!-- Lock Notice when Unchecked -->
       <div id="buy-lock-notice" class="p-3 bg-[#171c2d] border border-[#232b45] rounded-xl text-center text-[11px] text-slate-400 font-medium mb-3">
         <i class="fa-solid fa-lock text-amber-400 mr-1.5"></i>
         <span>Centang persetujuan di atas untuk menampilkan opsi order Telegram & Discord</span>
       </div>
 
-      <!-- Action Buttons (Hidden until terms checked) -->
       <div id="buy-buttons-container" class="hidden space-y-2 transition-all duration-300">
         <button 
           id="btn-buy-telegram"
@@ -384,37 +342,11 @@
     </div>
   </div>
 
-  <!-- Terms Modal -->
-  <div id="terms-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden items-center justify-center p-4">
-    <div class="bg-[#121624] border border-[#1e263d] rounded-2xl w-full max-w-lg p-6 relative">
-      <div class="flex justify-between items-center pb-3 border-b border-[#1e263d] mb-4">
-        <h3 class="font-bold text-sm text-white">Terms of Use - Will01Mod Official</h3>
-        <button onclick="closeTermsModal()" class="text-slate-400 hover:text-white">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      
-      <div class="space-y-3 text-xs text-slate-300 max-h-80 overflow-y-auto pr-2 leading-relaxed">
-        <p><strong>1. Acceptance of Terms:</strong> By downloading or purchasing any mod menu from Will01Mod Official, you acknowledge full compliance with these terms.</p>
-        <p><strong>2. Account Safety & Risk:</strong> All game modifications are provided for testing/entertainment purposes. You assume full responsibility for your game account status.</p>
-        <p><strong>3. License Policy:</strong> Subscriptions (Monthly/Lifetime) are tied to a single HWID/Device and cannot be resold without explicit permission.</p>
-        <p><strong>4. Non-Refundable:</strong> Digital products and activated VIP keys are strictly non-refundable once delivered.</p>
-      </div>
-
-      <div class="mt-5 text-right">
-        <button onclick="closeTermsModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs">
-          I Understand
-        </button>
-      </div>
-    </div>
-  </div>
-
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // Konfigurasi Firebase Resmi Anda
     const firebaseConfig = {
       apiKey: "AIzaSyAqJF91DDwhXt_tgha6uv_SM7ToZcZO_kQ",
       authDomain: "mod-store-c24a3.firebaseapp.com",
@@ -437,45 +369,13 @@
         type: "VIP",
         playstoreUrl: "https://play.google.com/store/apps/details?id=com.desertwarrior.joygame",
         image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80",
-        tags: ["Action RPG", "Role Playing", "PvP", "PvE", "Single Player"],
+        tags: ["Action RPG", "Role Playing", "PvP", "Single Player"],
         modFeatures: "Menu, God Mode, Unlimited Gems, Speed Game",
         monthlyPrice: "$20",
         monthlyRupiah: "Rp 250k",
         lifetimePrice: "$150",
         lifetimeRupiah: "Rp 2.2M",
         downloadUrl: "https://github.com/example/mod-apk-desertwarrior"
-      },
-      {
-        id: "MOD-002",
-        title: "Wicked Defense",
-        version: "1.1.7",
-        latestVersion: "1.2.4",
-        type: "VIP",
-        playstoreUrl: "https://play.google.com/store/apps/details?id=com.supercell.clashofclans",
-        image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80",
-        tags: ["Single Player", "Stylized", "Strategy", "Tower Defense", "Immersive"],
-        modFeatures: "Menu, Auto Win, Speed Game",
-        monthlyPrice: "$20",
-        monthlyRupiah: "Rp 250k",
-        lifetimePrice: "$150",
-        lifetimeRupiah: "Rp 2.2M",
-        downloadUrl: "https://github.com/example/mod-apk-wicked"
-      },
-      {
-        id: "MOD-003",
-        title: "Cat & Soup",
-        version: "5.0.0",
-        latestVersion: "5.0.0",
-        type: "VIP",
-        playstoreUrl: "https://play.google.com/store/apps/details?id=com.hidea.cat",
-        image: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80",
-        tags: ["Offline", "Single Player", "Simulation", "Idle", "Cartoon"],
-        modFeatures: "Menu, Free Shop",
-        monthlyPrice: "$20",
-        monthlyRupiah: "Rp 250k",
-        lifetimePrice: "$150",
-        lifetimeRupiah: "Rp 2.2M",
-        downloadUrl: "https://github.com/example/mod-apk-catsoup"
       }
     ];
 
@@ -488,7 +388,6 @@
         db = getFirestore(app);
         await signInAnonymously(auth);
 
-        // Path penyimpanan publik Firestore untuk sinkronisasi real-time
         const gamesRef = collection(db, 'artifacts', appId, 'public', 'data', 'games');
         onSnapshot(gamesRef, (snapshot) => {
           const fetched = [];
@@ -505,7 +404,7 @@
           window.renderGames();
         });
       } catch (err) {
-        console.warn("Fallback to LocalStorage:", err);
+        console.warn("Fallback LocalStorage:", err);
         window.renderGames();
       }
     }
@@ -634,7 +533,6 @@
                   </p>
                 </div>
 
-                <!-- Price Boxes with Shimmer Animation -->
                 <div class="grid grid-cols-2 gap-2 mt-4">
                   <div class="p-2.5 rounded-xl bg-[#171c2e] border border-[#232b45] shimmer-box">
                     <span class="text-[9px] font-bold text-slate-400 block uppercase">MONTHLY</span>
@@ -793,7 +691,6 @@
       }
 
       closeBuyModal();
-      showToast(`Membuka tautan pemesanan via ${platform.toUpperCase()}...`, "info");
     }
 
     function openPreviewUrl(url, title) {
@@ -803,38 +700,6 @@
         const query = encodeURIComponent(`${title} gameplay preview`);
         window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
       }
-    }
-
-    function openTermsModal(e) {
-      if (e) e.preventDefault();
-      const modal = document.getElementById('terms-modal');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-    }
-
-    function closeTermsModal() {
-      const modal = document.getElementById('terms-modal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-
-    function showToast(message, type = "info") {
-      const container = document.getElementById('toast-container');
-      const toast = document.createElement('div');
-      
-      let icon = "fa-circle-info text-cyan-400";
-      if (type === "success") icon = "fa-circle-check text-emerald-400";
-
-      toast.className = `pointer-events-auto flex items-center gap-2.5 bg-[#121624] border border-[#20283f] text-slate-100 text-xs px-4 py-3 rounded-xl shadow-2xl backdrop-blur-md transform translate-y-2 opacity-0 transition duration-200`;
-      toast.innerHTML = `<i class="fa-solid ${icon}"></i><span>${message}</span>`;
-
-      container.appendChild(toast);
-      
-      setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
-      setTimeout(() => {
-        toast.classList.add('translate-y-2', 'opacity-0');
-        setTimeout(() => toast.remove(), 200);
-      }, 3000);
     }
 
     window.handleSearch = handleSearch;
@@ -848,8 +713,6 @@
     window.handleTermsCheck = handleTermsCheck;
     window.proceedToBuyPlatform = proceedToBuyPlatform;
     window.openPreviewUrl = openPreviewUrl;
-    window.openTermsModal = openTermsModal;
-    window.closeTermsModal = closeTermsModal;
   </script>
 </body>
 </html>
