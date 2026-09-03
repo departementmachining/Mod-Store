@@ -37,24 +37,28 @@ module.exports = async (req, res) => {
     let version = '';
     let image = '';
 
+    // 1. Coba ekstraksi dari JSON-LD
     const jsonLdMatch = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi);
     if (jsonLdMatch) {
       for (const block of jsonLdMatch) {
         try {
           const raw = block.replace(/<script type="application\/ld\+json">/i, '').replace(/<\/script>/i, '').trim();
           const parsed = JSON.parse(raw);
-          if (parsed['@type'] === 'SoftwareApplication' || parsed.softwareVersion) {
+          if (parsed['@type'] === 'SoftwareApplication' || parsed.softwareVersion || parsed.image) {
             title = parsed.name || title;
             version = parsed.softwareVersion || version;
-            image = parsed.image || image;
+            if (parsed.image) {
+              image = typeof parsed.image === 'string' ? parsed.image : (parsed.image.url || image);
+            }
             break;
           }
         } catch (e) {
-          // Continue fallback
+          // Fallback parsing
         }
       }
     }
 
+    // 2. Fallback Judul
     if (!title) {
       const titleMatch = html.match(/<meta property="og:title" content="([^"]+)"/i) || html.match(/<title>([^<]+)<\/title>/i);
       if (titleMatch) {
@@ -65,11 +69,15 @@ module.exports = async (req, res) => {
       }
     }
 
+    // 3. Fallback Gambar Ikon / Banner Play Store
     if (!image) {
-      const imgMatch = html.match(/<meta property="og:image" content="([^"]+)"/i);
+      const imgMatch = html.match(/<meta property="og:image" content="([^"]+)"/i) || 
+                       html.match(/<meta name="twitter:image" content="([^"]+)"/i) ||
+                       html.match(/<img [^>]*src="([^"]+googleusercontent\.com[^"]+)"/i);
       if (imgMatch) image = imgMatch[1];
     }
 
+    // 4. Fallback Versi Play Store
     if (!version) {
       const verMatch = html.match(/\[\[\["(\d+\.\d+[\.\d]*)"\]/) ||
                        html.match(/"softwareVersion"\s*:\s*"([^"]+)"/i) ||
@@ -80,8 +88,13 @@ module.exports = async (req, res) => {
       }
     }
 
-    if (image && image.includes('googleusercontent.com')) {
-      image = image.replace(/=w\d+-h\d+.*$/, '=s512').replace(/=s\d+.*$/, '=s512');
+    // Pembersihan URL Gambar Play Store agar HD dan valid
+    if (image) {
+      image = image.replace(/&amp;/g, '&');
+      if (image.includes('googleusercontent.com')) {
+        // Ambil URL dasar sebelum tanda '=' lalu format ke resolusi HD 512px
+        image = image.split('=')[0] + '=s512';
+      }
     }
 
     return res.status(200).json({
