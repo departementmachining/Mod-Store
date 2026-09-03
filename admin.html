@@ -585,30 +585,89 @@
       btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Syncing...`;
 
       try {
-        const response = await fetch(`/api/playstore?url=${encodeURIComponent(urlInput)}`);
-        const result = await response.json();
+        let title = '';
+        let version = '';
+        let image = '';
+        let tags = [];
+        let success = false;
 
-        if (result.status === 'success') {
-          if (result.title) document.getElementById('form-title').value = result.title;
-          if (result.version) {
-            document.getElementById('form-version').value = result.version;
-            document.getElementById('form-latest-version').value = result.version;
+        // 1. Coba Serverless Backend Scraper (/api/playstore)
+        try {
+          const response = await fetch(`/api/playstore?url=${encodeURIComponent(urlInput)}`);
+          if (response.ok) {
+            const result = await response.json();
+            if (result.status === 'success') {
+              title = result.title;
+              version = result.version;
+              image = result.image;
+              tags = result.tags || [];
+              success = true;
+            }
           }
-          if (result.image) document.getElementById('form-image').value = result.image;
-          
-          // Auto-fill Tags Kategori
-          if (result.tags && result.tags.length > 0) {
-            document.getElementById('form-tags').value = Array.isArray(result.tags) ? result.tags.join(', ') : result.tags;
-          }
-          
-          document.getElementById('form-playstore-url').value = urlInput;
-          showToast("Sync Play Store (Versi, Gambar & Tags) berhasil!", "success");
-        } else {
-          showToast(result.message || "Gagal mengambil data Play Store", "info");
+        } catch (serverErr) {
+          console.warn("Serverless API offline, beralih ke Fallback Client Proxy...", serverErr);
         }
+
+        // 2. Fallback Client-side Scraper jika Serverless API belum di-deploy / 404
+        if (!success) {
+          const targetUrl = urlInput + (urlInput.includes('?') ? '&' : '?') + 'hl=en&gl=US';
+          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+          const proxyRes = await fetch(proxyUrl);
+
+          if (proxyRes.ok) {
+            const html = await proxyRes.text();
+            
+            // Extract Title
+            const titleMatch = html.match(/<meta property="og:title" content="([^"]+)"/i) || html.match(/<title>([^<]+)<\/title>/i);
+            if (titleMatch) {
+              title = titleMatch[1].replace(/\s*-\s*Apps on Google Play.*/i, '').replace(/\s*-\s*Aplikasi di Google Play.*/i, '').trim();
+            }
+
+            // Extract Image
+            const imgMatch = html.match(/<meta property="og:image" content="([^"]+)"/i) || html.match(/<img [^>]*src="([^"]+googleusercontent\.com[^"]+)"/i);
+            if (imgMatch) {
+              image = imgMatch[1].replace(/&amp;/g, '&');
+              if (image.includes('googleusercontent.com')) {
+                image = image.split('=')[0] + '=s512';
+              }
+            }
+
+            // Extract Version
+            const verMatch = html.match(/\[\[\["(\d+\.\d+[\.\d]*)"\]/) || html.match(/"softwareVersion"\s*:\s*"([^"]+)"/i);
+            if (verMatch) version = verMatch[1];
+
+            // Extract Tags
+            const knownGenres = ['RPG', 'Monster', 'Single player', 'Roguelike', 'Immersive', 'Stylized', 'Bergaya unik', 'Action RPG', 'Strategy', 'Tower Defense', 'Idle RPG', 'Anime'];
+            knownGenres.forEach(kg => {
+              if (html.toLowerCase().includes(kg.toLowerCase())) {
+                const formatted = kg === 'Bergaya unik' ? 'Stylized' : kg;
+                if (!tags.includes(formatted)) tags.push(formatted);
+              }
+            });
+
+            if (title || version || image) success = true;
+          }
+        }
+
+        if (success) {
+          if (title) document.getElementById('form-title').value = title;
+          if (version) {
+            document.getElementById('form-version').value = version;
+            document.getElementById('form-latest-version').value = version;
+          }
+          if (image) document.getElementById('form-image').value = image;
+          if (tags.length > 0) {
+            document.getElementById('form-tags').value = tags.join(', ');
+          }
+          document.getElementById('form-playstore-url').value = urlInput;
+          showToast("Sync Play Store berhasil (Gambar, Versi & Tags terisi)!", "success");
+        } else {
+          showToast("Gagal mengambil data dari Play Store. Silakan isi form manual.", "info");
+        }
+
       } catch (err) {
-        console.error("Scraper API Error:", err);
-        showToast("Server scraper belum di-deploy atau URL tidak dapat diakses", "info");
+        console.error("Scraper Error:", err);
+        showToast("Gagal menghubungi server Play Store", "info");
       } finally {
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> Sync`;
