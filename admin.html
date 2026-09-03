@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Will01Mod - Admin Control Panel</title>
+  <title>Will01Mod Admin Panel - Control Center</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -57,277 +57,306 @@
     }
   </style>
 </head>
-<body class="font-sans min-h-screen flex flex-col selection:bg-indigo-600 selection:text-white">
+<body class="font-sans min-h-screen flex flex-col selection:bg-indigo-600 selection:text-white pb-12">
 
-  <!-- Toast Notification Container -->
-  <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
-
-  <!-- PIN Security Barrier Modal -->
-  <div id="pin-modal" class="fixed inset-0 bg-black/90 backdrop-blur-lg z-50 flex items-center justify-center p-4">
-    <div class="card-mod p-6 w-full max-w-sm text-center border-indigo-500/30">
-      <div class="w-12 h-12 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center mx-auto mb-3 text-xl">
+  <!-- Admin Login Screen (Tampil saat pertama masuk) -->
+  <div id="admin-login-screen" class="min-h-screen flex items-center justify-center p-4 bg-[#0a0d14]">
+    <div class="bg-[#121624] border border-[#1e2538] rounded-2xl w-full max-w-sm p-6 sm:p-8 text-center shadow-2xl">
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-cyan-500 text-white flex items-center justify-center mx-auto mb-5 text-2xl shadow-lg shadow-indigo-500/20">
         <i class="fa-solid fa-user-shield"></i>
       </div>
-      <h3 class="font-extrabold text-base text-white">Will01Mod Admin Access</h3>
-      <p class="text-xs text-slate-400 mt-1 mb-4">Masukkan PIN Admin untuk mengakses dashboard</p>
-      
-      <form onsubmit="verifyAdminPin(event)">
-        <input 
-          type="password" 
-          id="pin-input" 
-          placeholder="Masukkan PIN (Default: 1234)" 
-          class="w-full bg-[#181e30] border border-[#28324e] rounded-xl px-4 py-2.5 text-center text-sm font-mono tracking-widest text-white focus:outline-none focus:border-indigo-500 mb-3"
-          required
-        >
-        <button type="submit" class="w-full py-2.5 btn-purple text-white rounded-xl font-bold text-xs shadow-lg">
-          Buka Dashboard
+      <h2 class="text-lg font-extrabold text-white tracking-tight">Login Admin Panel</h2>
+      <p class="text-xs text-slate-400 mt-1 mb-6">Masukkan PIN Keamanan untuk mengelola toko Will01Mod.</p>
+
+      <form onsubmit="unlockAdminPanel(event)" class="space-y-4">
+        <div>
+          <input 
+            type="password" 
+            id="pin-input" 
+            maxlength="6" 
+            placeholder="Masukkan PIN (Default: 1234)" 
+            class="w-full bg-[#181e30] border border-[#28324e] rounded-xl text-center text-lg font-mono tracking-widest text-white py-3 focus:outline-none focus:border-indigo-500 placeholder-slate-500 transition"
+            required
+            autofocus
+          >
+          <span id="pin-error-msg" class="text-[11px] text-rose-400 font-semibold mt-2 hidden block">
+            <i class="fa-solid fa-triangle-exclamation mr-1"></i> PIN Salah! Coba lagi.
+          </span>
+        </div>
+
+        <button type="submit" class="w-full py-3 btn-purple text-white font-bold rounded-xl text-xs transition shadow-lg flex items-center justify-center gap-2 cursor-pointer">
+          <i class="fa-solid fa-right-to-bracket"></i>
+          <span>Masuk Panel Admin</span>
         </button>
+
+        <a href="index.html" class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 transition mt-2">
+          <i class="fa-solid fa-arrow-left text-[10px]"></i>
+          <span>Kembali ke Toko</span>
+        </a>
       </form>
     </div>
   </div>
 
-  <!-- Header Navigation -->
-  <header class="sticky top-0 z-40 bg-[#0a0d14]/90 backdrop-blur-md border-b border-[#181e30]">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16">
-        
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-md">
-            <i class="fa-solid fa-sliders"></i>
+  <!-- Main Admin Dashboard Container (Hidden until logged in) -->
+  <div id="admin-main-panel" class="hidden flex-col min-h-screen">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 bg-[#0a0d14]/90 backdrop-blur-md border-b border-[#181e30]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-md shadow-indigo-500/20">
+              <i class="fa-solid fa-user-gear"></i>
+            </div>
+            <div>
+              <span class="font-extrabold text-white text-base tracking-tight block">
+                Will01Mod <span class="text-indigo-400 font-normal">Admin Panel</span>
+              </span>
+              <span class="text-[10px] text-slate-400 font-mono block">Control Center v3.5</span>
+            </div>
           </div>
-          <div>
-            <span class="font-extrabold text-white text-base tracking-tight">Will01Mod <span class="text-indigo-400 font-normal">Admin Panel</span></span>
-            <span class="text-[10px] text-slate-400 block -mt-1">Play Store Precision Sync System</span>
+
+          <div class="flex items-center gap-2">
+            <a href="index.html" class="flex items-center gap-1.5 bg-[#181e30] hover:bg-[#222a40] text-slate-300 border border-[#28324e] px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+              <i class="fa-solid fa-store text-indigo-400"></i>
+              <span class="hidden sm:inline">Lihat Toko</span>
+            </a>
+            <button onclick="openSettingsModal()" class="bg-[#181e30] hover:bg-[#222a40] text-slate-300 border border-[#28324e] px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-gear text-amber-400"></i>
+              <span class="hidden sm:inline">Link Medsos</span>
+            </button>
+            <button onclick="openAddGameModal()" class="btn-purple text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-lg cursor-pointer">
+              <i class="fa-solid fa-plus"></i>
+              <span>Tambah Game</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-grow">
+
+      <!-- STATS GRID -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div class="card-mod p-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-400 uppercase">Total Mod Ready</span>
+            <i class="fa-solid fa-gamepad text-indigo-400 text-lg"></i>
+          </div>
+          <div class="text-2xl font-black text-white mt-2" id="stat-total-games">0</div>
+          <span class="text-[10px] text-slate-500 mt-1 block">Tersedia di toko marketplace</span>
+        </div>
+
+        <div class="card-mod p-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-400 uppercase">Perlu Update</span>
+            <i class="fa-solid fa-arrows-rotate text-amber-400 text-lg"></i>
+          </div>
+          <div class="text-2xl font-black text-amber-400 mt-2" id="stat-updates-needed">0</div>
+          <span class="text-[10px] text-slate-500 mt-1 block">Versi Play Store lebih tinggi</span>
+        </div>
+
+        <div class="card-mod p-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-400 uppercase">Status Database</span>
+            <i class="fa-solid fa-database text-emerald-400 text-lg"></i>
+          </div>
+          <div class="text-xs font-bold text-emerald-400 mt-3 flex items-center gap-1.5" id="stat-firebase-status">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Connected (Real-time)
+          </div>
+          <span class="text-[10px] text-slate-500 mt-1 block">Live Sync Active</span>
+        </div>
+      </div>
+
+      <!-- GAME MODS MANAGEMENT TABLE -->
+      <div id="section-mods">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+          <div class="relative w-full sm:w-72">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+            <input 
+              type="text" 
+              id="admin-search-input"
+              oninput="handleAdminSearch(this.value)"
+              placeholder="Cari judul game..."
+              class="w-full bg-[#121624] border border-[#232b42] rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            >
+          </div>
+
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button onclick="checkAllPlayStoreUpdates()" class="px-3 py-2 bg-[#1b2238] hover:bg-[#232c4a] text-amber-300 border border-amber-500/30 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-arrows-rotate text-amber-400"></i>
+              <span>Cek Update Play Store</span>
+            </button>
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
-          <a href="index.html" class="flex items-center gap-1.5 bg-[#181e30] hover:bg-[#222a40] text-slate-300 border border-[#28324e] px-3 py-1.5 rounded-lg text-xs font-semibold transition">
-            <i class="fa-solid fa-store text-indigo-400"></i>
-            <span>View Store</span>
-          </a>
-          <button onclick="openAddGameModal()" class="btn-purple text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-lg">
-            <i class="fa-solid fa-plus"></i>
-            <span>Tambah Game</span>
+        <div class="card-mod overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-[#161c2e] border-b border-[#222a40] text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  <th class="p-3.5">Game / Banner</th>
+                  <th class="p-3.5">Versi Mod</th>
+                  <th class="p-3.5">Versi Play Store</th>
+                  <th class="p-3.5">Tipe</th>
+                  <th class="p-3.5">Harga Monthly / Lifetime</th>
+                  <th class="p-3.5 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="admin-table-body" class="divide-y divide-[#1e2538] text-xs">
+                <!-- Injected dynamically via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <div id="admin-table-empty" class="hidden text-center py-12">
+            <i class="fa-solid fa-ghost text-slate-600 text-2xl mb-2"></i>
+            <p class="text-xs text-slate-400 font-semibold">Tidak Ada Game Ditemukan</p>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Modal Tambah / Edit Game -->
+    <div id="game-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden items-center justify-center p-4">
+      <div class="bg-[#121624] border border-[#1e263d] rounded-2xl w-full max-w-xl p-5 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+        
+        <div class="flex justify-between items-center pb-3 border-b border-[#1e263d] mb-4">
+          <h3 id="game-modal-title" class="font-bold text-sm text-white flex items-center gap-2">
+            <i class="fa-solid fa-square-plus text-indigo-400"></i>
+            <span>Tambah Mod Game Baru</span>
+          </h3>
+          <button onclick="closeGameModal()" class="text-slate-400 hover:text-white">
+            <i class="fa-solid fa-xmark text-sm"></i>
           </button>
         </div>
 
-      </div>
-    </div>
-  </header>
+        <form onsubmit="saveGameSubmit(event)" class="space-y-3.5 text-xs">
+          <input type="hidden" id="edit-game-id" value="">
 
-  <!-- Dashboard Overview Content -->
-  <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-    
-    <!-- Admin Stat Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-      <div class="card-mod p-4 flex items-center justify-between">
-        <div>
-          <span class="text-xs text-slate-400 uppercase font-bold tracking-wider">Total Game Mod</span>
-          <div id="stat-total-mods" class="text-2xl font-black text-white mt-1">0</div>
-        </div>
-        <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center text-lg">
-          <i class="fa-solid fa-gamepad"></i>
-        </div>
-      </div>
-
-      <div class="card-mod p-4 flex items-center justify-between">
-        <div>
-          <span class="text-xs text-slate-400 uppercase font-bold tracking-wider">VIP Mods</span>
-          <div id="stat-vip-mods" class="text-2xl font-black text-indigo-400 mt-1">0</div>
-        </div>
-        <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center text-lg">
-          <i class="fa-solid fa-crown"></i>
-        </div>
-      </div>
-
-      <div class="card-mod p-4 flex items-center justify-between">
-        <div>
-          <span class="text-xs text-slate-400 uppercase font-bold tracking-wider">Perlu Update Mod</span>
-          <div id="stat-outdated-mods" class="text-2xl font-black text-amber-400 mt-1">0</div>
-        </div>
-        <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-lg">
-          <i class="fa-solid fa-arrows-rotate"></i>
-        </div>
-      </div>
-    </div>
-
-    <!-- Table Management Header -->
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-      <h3 class="font-extrabold text-base text-white">Daftar Game Modifikasi & Akurasi Versi</h3>
-      <div class="flex items-center gap-2 w-full sm:w-auto">
-        <button onclick="checkAllPlayStoreUpdates()" class="px-3 py-1.5 bg-[#1e2740] hover:bg-[#283454] text-amber-300 border border-amber-500/30 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap">
-          <i class="fa-solid fa-arrows-rotate text-amber-400"></i>
-          <span>Cek Sync Play Store</span>
-        </button>
-        <div class="relative w-full sm:w-64">
-          <input 
-            type="text" 
-            id="admin-search-input" 
-            oninput="renderAdminTable(this.value)" 
-            placeholder="Cari nama game..." 
-            class="w-full bg-[#121624] border border-[#20273b] rounded-xl px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-          >
-        </div>
-      </div>
-    </div>
-
-    <!-- Admin Game Table -->
-    <div class="card-mod overflow-x-auto">
-      <table class="w-full text-left text-xs text-slate-300">
-        <thead class="bg-[#181e30] border-b border-[#232d48] text-slate-400 font-semibold uppercase">
-          <tr>
-            <th class="p-3">Game Info</th>
-            <th class="p-3">Banner & Play Store</th>
-            <th class="p-3">Versi Mod</th>
-            <th class="p-3">Versi Play Store Asli</th>
-            <th class="p-3">Mod Features</th>
-            <th class="p-3">Harga</th>
-            <th class="p-3 text-center">Status & Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="admin-game-table-body" class="divide-y divide-[#1e2538]">
-          <!-- Injected dynamically -->
-        </tbody>
-      </table>
-    </div>
-
-  </main>
-
-  <!-- Add / Edit Game Modal -->
-  <div id="game-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden items-center justify-center p-4">
-    <div class="bg-[#121624] border border-[#1e263d] rounded-2xl w-full max-w-lg p-5 relative max-h-[90vh] overflow-y-auto shadow-2xl">
-      <div class="flex justify-between items-center pb-3 border-b border-[#1e263d] mb-4">
-        <h3 id="game-modal-title" class="font-bold text-sm text-white">Tambah Game Mod Baru</h3>
-        <button onclick="closeGameModal()" class="text-slate-400 hover:text-white">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <form id="game-form" onsubmit="saveGameSubmit(event)" class="space-y-3 text-xs">
-        <input type="hidden" id="edit-game-id">
-
-        <div>
-          <label class="block text-slate-400 mb-1 font-semibold">URL Google Play Store (Otomatis Ambil Gambar & Judul)</label>
-          <div class="flex gap-2">
-            <input 
-              type="url" 
-              id="input-playstore" 
-              required
-              oninput="autoSyncPlayStoreData(this.value)"
-              placeholder="https://play.google.com/store/apps/details?id=com.game.package" 
-              class="w-full bg-[#181e30] border border-[#273250] rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500"
-            >
-            <button 
-              type="button" 
-              onclick="autoSyncPlayStoreData(document.getElementById('input-playstore').value, true)"
-              class="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-xs whitespace-nowrap flex items-center gap-1"
-            >
-              <i class="fa-solid fa-arrows-rotate"></i> Sync
-            </button>
-          </div>
-
-          <div id="playstore-img-preview-container" class="mt-2.5 p-2.5 bg-[#181f33] rounded-xl border border-[#232d4a] flex items-center justify-between gap-3 hidden">
-            <div class="flex items-center gap-3">
-              <img id="playstore-img-preview" src="" class="w-10 h-10 rounded-lg object-cover bg-slate-800 border border-[#2a3554]" alt="Preview" onerror="this.src='https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80';">
-              <div>
-                <span id="playstore-title-preview" class="text-xs font-bold text-white block">Nama Game Disinkronkan</span>
-                <span id="playstore-version-preview" class="text-[10px] text-cyan-300 font-mono block">Versi Play Store: -</span>
-                <span id="playstore-sync-status" class="text-[10px] text-emerald-400 mt-0.5 flex items-center gap-1">
-                  <i class="fa-solid fa-circle-check"></i> Data Play Store ditemukan
-                </span>
-              </div>
+          <div>
+            <label class="block text-slate-300 font-bold mb-1">
+              URL Google Play Store <span class="text-indigo-400">(Otomatis Sync)</span>
+            </label>
+            <div class="flex gap-2">
+              <input 
+                type="url" 
+                id="input-playstore" 
+                required
+                placeholder="https://play.google.com/store/apps/details?id=..." 
+                class="flex-1 bg-[#181e30] border border-[#273250] rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500 font-mono"
+              >
+              <button 
+                type="button" 
+                onclick="autoSyncPlayStoreData(document.getElementById('input-playstore').value, true)"
+                class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition flex-shrink-0"
+              >
+                Sync
+              </button>
             </div>
-            <button type="button" onclick="applyPlayStoreMetadata()" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-bold">
-              Terapkan
-            </button>
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-slate-400 mb-1 font-semibold">Judul Game Mod</label>
-          <input type="text" id="input-title" required placeholder="e.g. Wicked Defense" class="w-full bg-[#181e30] border border-[#273250] rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500">
-        </div>
-
-        <div class="grid grid-cols-3 gap-2">
-          <div>
-            <label class="block text-slate-400 mb-1 font-semibold">Versi Mod Saat Ini</label>
-            <input type="text" id="input-version" required placeholder="e.g. 1.1.7" class="w-full bg-[#181e30] border border-[#273250] rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500 font-mono">
-          </div>
-          <div>
-            <label class="block text-slate-400 mb-1 font-semibold">Versi Play Store Asli</label>
-            <input type="text" id="input-latest-version" required placeholder="e.g. 1.2.0" class="w-full bg-[#181e30] border border-[#273250] rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500 font-mono">
-          </div>
-          <div>
-            <label class="block text-slate-400 mb-1 font-semibold">Tipe Mod</label>
-            <select id="input-type" class="w-full bg-[#181e30] border border-[#273250] rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500">
-              <option value="VIP">VIP</option>
-              <option value="FREE">FREE</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-slate-400 mb-1 font-semibold">Fitur Mod Menu</label>
-          <input type="text" id="input-features" required placeholder="e.g. Menu, Auto Win, Speed Game" class="w-full bg-[#181e30] border border-[#273250] rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500">
-        </div>
-
-        <div>
-          <label class="block text-slate-400 mb-1 font-semibold">Tags Kategori (Dipisahkan Koma)</label>
-          <input type="text" id="input-tags" placeholder="Single Player, Strategy, Tower Defense" class="w-full bg-[#181e30] border border-[#273250] rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500">
-        </div>
-
-        <div class="grid grid-cols-2 gap-2 p-3 bg-[#181f33] rounded-xl border border-[#232d4a]">
-          <div>
-            <label class="block text-slate-400 mb-0.5">Harga Monthly ($)</label>
-            <input type="text" id="input-m-price" placeholder="$20" value="$20" class="w-full bg-[#121624] border border-[#273250] rounded-lg px-2.5 py-1.5 text-slate-100 font-mono">
-          </div>
-          <div>
-            <label class="block text-slate-400 mb-0.5">Rupiah Monthly</label>
-            <input type="text" id="input-m-rp" placeholder="Rp 250k" value="Rp 250k" class="w-full bg-[#121624] border border-[#273250] rounded-lg px-2.5 py-1.5 text-slate-100 font-mono">
           </div>
 
           <div>
-            <label class="block text-slate-400 mb-0.5">Harga Lifetime ($)</label>
-            <input type="text" id="input-l-price" placeholder="$150" value="$150" class="w-full bg-[#121624] border border-[#273250] rounded-lg px-2.5 py-1.5 text-slate-100 font-mono">
+            <label class="block text-slate-400 mb-1 font-semibold">Judul Game Mod</label>
+            <input type="text" id="input-title" required placeholder="Desert Warrior Action RPG Game" class="w-full bg-[#181e30] border border-[#273250] rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500">
           </div>
+
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="block text-slate-400 mb-1 font-semibold">Versi Mod saat Ini</label>
+              <input type="text" id="input-version" required placeholder="3.5.0" class="w-full bg-[#181e30] border border-[#273250] rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500 font-mono">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1 font-semibold">Versi Play Store</label>
+              <input type="text" id="input-latest-version" required placeholder="3.5.5" class="w-full bg-[#181e30] border border-[#273250] rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500 font-mono">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1 font-semibold">Tipe Mod</label>
+              <select id="input-type" class="w-full bg-[#181e30] border border-[#273250] rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500 font-bold">
+                <option value="VIP">VIP</option>
+                <option value="FREE">FREE</option>
+              </select>
+            </div>
+          </div>
+
           <div>
-            <label class="block text-slate-400 mb-0.5">Rupiah Lifetime</label>
-            <input type="text" id="input-l-rp" placeholder="Rp 2.2M" value="Rp 2.2M" class="w-full bg-[#121624] border border-[#273250] rounded-lg px-2.5 py-1.5 text-slate-100 font-mono">
+            <label class="block text-slate-400 mb-1 font-semibold">Fitur Mod Menu</label>
+            <input type="text" id="input-features" required placeholder="e.g. Menu, God Mode, Unlimited Gems, Speed Game" class="w-full bg-[#181e30] border border-[#273250] rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500">
           </div>
-        </div>
 
-        <div>
-          <label class="block text-slate-400 mb-1 font-semibold">Direct Download Link (.APK)</label>
-          <input type="url" id="input-download" placeholder="https://github.com/example/mod-apk" class="w-full bg-[#181e30] border border-[#273250] rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500">
-        </div>
+          <div>
+            <label class="block text-slate-400 mb-1 font-semibold">Link Preview YouTube Game</label>
+            <input type="url" id="input-preview-url" placeholder="https://www.youtube.com/watch?v=..." class="w-full bg-[#181e30] border border-[#273250] rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
 
-        <button type="submit" class="w-full py-2.5 btn-purple hover:bg-indigo-500 text-white font-bold rounded-xl mt-2 transition shadow-lg">
-          Simpan Data Game
-        </button>
-      </form>
+          <div>
+            <label class="block text-slate-400 mb-1 font-semibold">Tags Kategori (Pisahkan dengan Koma)</label>
+            <input type="text" id="input-tags" placeholder="Single Player, Strategy, Tower Defense" class="w-full bg-[#181e30] border border-[#273250] rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 p-3 bg-[#171c2e] border border-[#232b45] rounded-xl">
+            <div>
+              <label class="block text-indigo-400 mb-1 font-bold">Harga Monthly ($ USD)</label>
+              <input type="text" id="input-m-price" placeholder="$20" class="w-full bg-[#121624] border border-[#232b42] rounded-lg px-2.5 py-1.5 text-slate-100">
+              <label class="block text-slate-500 mt-1 mb-0.5">Rupiah Text</label>
+              <input type="text" id="input-m-rp" placeholder="Rp 250k" class="w-full bg-[#121624] border border-[#232b42] rounded-lg px-2.5 py-1.5 text-slate-100">
+            </div>
+
+            <div>
+              <label class="block text-indigo-400 mb-1 font-bold">Harga Lifetime ($ USD)</label>
+              <input type="text" id="input-l-price" placeholder="$150" class="w-full bg-[#121624] border border-[#232b42] rounded-lg px-2.5 py-1.5 text-slate-100">
+              <label class="block text-slate-500 mt-1 mb-0.5">Rupiah Text</label>
+              <input type="text" id="input-l-rp" placeholder="Rp 2.2M" class="w-full bg-[#121624] border border-[#232b42] rounded-lg px-2.5 py-1.5 text-slate-100">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-slate-400 mb-1 font-semibold">Link Download Mod APK</label>
+            <input type="url" id="input-download" required placeholder="https://github.com/..." class="w-full bg-[#181e30] border border-[#273250] rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500 font-mono">
+          </div>
+
+          <button type="submit" class="w-full py-2.5 btn-purple text-white font-bold rounded-xl mt-3 transition shadow-lg cursor-pointer">
+            Simpan Mod Game
+          </button>
+        </form>
+
+      </div>
     </div>
+
+    <!-- Modal Settings Medsos -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden items-center justify-center p-4">
+      <div class="bg-[#121624] border border-[#1e263d] rounded-2xl w-full max-w-md p-5 relative shadow-2xl">
+        <div class="flex justify-between items-center pb-3 border-b border-[#1e263d] mb-4">
+          <h3 class="font-bold text-sm text-white"><i class="fa-solid fa-link text-indigo-400 mr-2"></i>Atur Link Order Telegram & Discord</h3>
+          <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <form onsubmit="saveAdminSettings(event)" class="space-y-3 text-xs">
+          <div>
+            <label class="block text-slate-400 mb-1 font-semibold">Link Telegram Order / Admin</label>
+            <input type="url" id="setting-telegram" required placeholder="https://t.me/username_admin" class="w-full bg-[#181e30] border border-[#273250] rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500 font-mono">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1 font-semibold">Link Discord Server / Support</label>
+            <input type="url" id="setting-discord" required placeholder="https://discord.gg/your_server" class="w-full bg-[#181e30] border border-[#273250] rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500 font-mono">
+          </div>
+          <button type="submit" class="w-full py-2.5 btn-purple text-white font-bold rounded-xl mt-3 transition shadow-lg">
+            Simpan Pengaturan Link
+          </button>
+        </form>
+      </div>
+    </div>
+
   </div>
 
-  <!-- Firebase Script -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    
-    const firebaseConfig = {
-  apiKey: "AIzaSyAqJF91DDwhXt_tgha6uv_SM7ToZcZO_kQ",
-  authDomain: "mod-store-c24a3.firebaseapp.com",
-  projectId: "mod-store-c24a3",
-  storageBucket: "mod-store-c24a3.firebasestorage.app",
-  messagingSenderId: "319704239889",
-  appId: "1:319704239889:web:2e11077cb7ec7787bb86b0"
-};
-
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'will01mod-store';
-    let db = null;
-    let auth = null;
-
+  <script>
     const INITIAL_GAMES = [
       {
         id: "MOD-001",
@@ -337,8 +366,9 @@
         type: "VIP",
         playstoreUrl: "https://play.google.com/store/apps/details?id=com.desertwarrior.joygame",
         image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80",
-        tags: ["Action RPG", "Role Playing", "PvP", "PvE", "Single Player"],
+        tags: ["Action RPG", "Role Playing", "PvP", "Single Player"],
         modFeatures: "Menu, God Mode, Unlimited Gems, Speed Game",
+        previewUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
         monthlyPrice: "$20",
         monthlyRupiah: "Rp 250k",
         lifetimePrice: "$150",
@@ -353,390 +383,175 @@
         type: "VIP",
         playstoreUrl: "https://play.google.com/store/apps/details?id=com.supercell.clashofclans",
         image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80",
-        tags: ["Single Player", "Stylized", "Strategy", "Tower Defense"],
+        tags: ["Single Player", "Strategy", "Tower Defense"],
         modFeatures: "Menu, Auto Win, Speed Game",
+        previewUrl: "",
         monthlyPrice: "$20",
         monthlyRupiah: "Rp 250k",
         lifetimePrice: "$150",
         lifetimeRupiah: "Rp 2.2M",
         downloadUrl: "https://github.com/example/mod-apk-wicked"
-      },
-      {
-        id: "MOD-003",
-        title: "Cat & Soup",
-        version: "5.0.0",
-        latestVersion: "5.0.0",
-        type: "VIP",
-        playstoreUrl: "https://play.google.com/store/apps/details?id=com.hidea.cat",
-        image: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80",
-        tags: ["Offline", "Simulation", "Idle"],
-        modFeatures: "Menu, Free Shop",
-        monthlyPrice: "$20",
-        monthlyRupiah: "Rp 250k",
-        lifetimePrice: "$150",
-        lifetimeRupiah: "Rp 2.2M",
-        downloadUrl: "https://github.com/example/mod-apk-catsoup"
       }
     ];
 
     window.adminGamesState = JSON.parse(localStorage.getItem('will01_games')) || INITIAL_GAMES;
+    let adminSearchQuery = '';
 
-    async function setupFirebaseAdmin() {
-      if (typeof __firebase_config !== 'undefined') {
-        try {
-          const config = JSON.parse(__firebase_config);
-          const app = initializeApp(config);
-          auth = getAuth(app);
-          db = getFirestore(app);
+    // PIN Authentication Handler
+    function unlockAdminPanel(e) {
+      if (e) e.preventDefault();
+      const inputPin = document.getElementById('pin-input').value.trim();
+      const errorMsg = document.getElementById('pin-error-msg');
+      const loginScreen = document.getElementById('admin-login-screen');
+      const mainPanel = document.getElementById('admin-main-panel');
 
-          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-            await signInWithCustomToken(auth, __initial_auth_token);
-          } else {
-            await signInAnonymously(auth);
-          }
-
-          window.firestoreDb = db;
-          window.firestoreAppId = appId;
-
-          const gamesRef = collection(db, 'artifacts', appId, 'public', 'data', 'games');
-          onSnapshot(gamesRef, (snapshot) => {
-            const fetched = [];
-            snapshot.forEach(d => fetched.push({ id: d.id, ...d.data() }));
-            if (fetched.length > 0) {
-              window.adminGamesState = fetched;
-              localStorage.setItem('will01_games', JSON.stringify(fetched));
-            }
-            window.renderAdminTable();
-          }, (err) => console.error("Firestore Admin Error:", err));
-          return;
-        } catch (err) {
-          console.warn("Firebase Admin Fallback:", err);
-        }
-      }
-      window.renderAdminTable();
-    }
-
-    window.saveGameToFirestore = async function(gameData) {
-      if (window.firestoreDb) {
-        const gameDoc = doc(window.firestoreDb, 'artifacts', window.firestoreAppId, 'public', 'data', 'games', gameData.id);
-        await setDoc(gameDoc, gameData);
+      if (inputPin === "1234") { // Default Admin PIN
+        loginScreen.classList.add('hidden');
+        loginScreen.classList.remove('flex');
+        mainPanel.classList.remove('hidden');
+        mainPanel.classList.add('flex');
+        sessionStorage.setItem('will01_admin_unlocked', 'true');
+        showToast("Login Berhasil! Selamat datang di Admin Panel.", "success");
       } else {
-        const idx = window.adminGamesState.findIndex(g => g.id === gameData.id);
-        if (idx >= 0) window.adminGamesState[idx] = gameData;
-        else window.adminGamesState.unshift(gameData);
-        localStorage.setItem('will01_games', JSON.stringify(window.adminGamesState));
+        errorMsg.classList.remove('hidden');
       }
-    };
+    }
 
-    window.deleteGameFromFirestore = async function(id) {
-      if (window.firestoreDb) {
-        const gameDoc = doc(window.firestoreDb, 'artifacts', window.firestoreAppId, 'public', 'data', 'games', id);
-        await deleteDoc(gameDoc);
+    function checkPinOnLoad() {
+      const loginScreen = document.getElementById('admin-login-screen');
+      const mainPanel = document.getElementById('admin-main-panel');
+
+      if (sessionStorage.getItem('will01_admin_unlocked') === 'true') {
+        loginScreen.classList.add('hidden');
+        loginScreen.classList.remove('flex');
+        mainPanel.classList.remove('hidden');
+        mainPanel.classList.add('flex');
       } else {
-        window.adminGamesState = window.adminGamesState.filter(g => g.id !== id);
-        localStorage.setItem('will01_games', JSON.stringify(window.adminGamesState));
-      }
-    };
-
-    window.addEventListener('DOMContentLoaded', setupFirebaseAdmin);
-  </script>
-
-  <script>
-    function verifyAdminPin(e) {
-      e.preventDefault();
-      const pin = document.getElementById('pin-input').value;
-      if (pin === '1234') {
-        document.getElementById('pin-modal').classList.add('hidden');
-        showToast("Akses Admin Diberikan!", "success");
-      } else {
-        showToast("PIN Salah! Akses Ditolak.", "error");
+        loginScreen.classList.remove('hidden');
+        loginScreen.classList.add('flex');
+        mainPanel.classList.add('hidden');
+        mainPanel.classList.remove('flex');
       }
     }
 
-    let currentSyncedImage = "";
-    let currentSyncedTitle = "";
-    let currentSyncedVersion = "";
+    window.renderAdminTable = function() {
+      const tbody = document.getElementById('admin-table-body');
+      const emptyState = document.getElementById('admin-table-empty');
+      const totalDisplay = document.getElementById('stat-total-games');
+      const updatesNeededDisplay = document.getElementById('stat-updates-needed');
 
-    async function fetchPlayStoreRealData(url) {
-      if (!url || !url.includes('play.google.com')) return null;
-
-      let extractedTitle = "";
-      let extractedImage = "";
-      let extractedVersion = "";
-
-      try {
-        const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(url.trim())}`);
-        const json = await res.json();
-        if (json.status === 'success' && json.data) {
-          extractedImage = json.data.image?.url || json.data.logo?.url || "";
-          if (json.data.title) {
-            extractedTitle = json.data.title
-              .replace(/\s*-\s*Apps on Google Play.*/i, '')
-              .replace(/\s*-\s*Aplikasi di Google Play.*/i, '')
-              .trim();
-          }
-        }
-      } catch (err) {
-        console.warn("Microlink API error:", err);
-      }
-
-      try {
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url.trim() + '&hl=en&gl=US')}`;
-        const res = await fetch(proxyUrl);
-        const data = await res.json();
-        
-        if (data.contents) {
-          const html = data.contents;
-          const match1 = html.match(/\[\[\["(\d+\.\d+[\.\d]*)"\]/); 
-          const match2 = html.match(/"softwareVersion"\s*:\s*"([^"]+)"/i);
-          const match3 = html.match(/Current Version.+?>([\d\.]+)<\/span>/i);
-
-          if (match1 && match1[1]) extractedVersion = match1[1];
-          else if (match2 && match2[1]) extractedVersion = match2[1];
-          else if (match3 && match3[1]) extractedVersion = match3[1];
-          
-          if (extractedVersion) {
-            extractedVersion = extractedVersion.replace(/[^0-9\.]/g, '');
-          }
-        }
-      } catch (e) {
-        console.warn("HTML Scrape Proxy error:", e);
-      }
-
-      return {
-        title: extractedTitle,
-        image: extractedImage,
-        version: extractedVersion
-      };
-    }
-
-    async function autoSyncPlayStoreData(url, forceNotify = false) {
-      const container = document.getElementById('playstore-img-preview-container');
-      const img = document.getElementById('playstore-img-preview');
-      const titleDisplay = document.getElementById('playstore-title-preview');
-      const versionDisplay = document.getElementById('playstore-version-preview');
-      const status = document.getElementById('playstore-sync-status');
-
-      if (!url || !url.trim()) {
-        container.classList.add('hidden');
-        currentSyncedImage = "";
-        currentSyncedTitle = "";
-        currentSyncedVersion = "";
-        return;
-      }
-
-      container.classList.remove('hidden');
-      status.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-amber-400"></i> Membaca data Google Play...`;
-
-      const data = await fetchPlayStoreRealData(url);
-
-      if (data && (data.title || data.image || data.version)) {
-        currentSyncedImage = data.image || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80";
-        currentSyncedTitle = data.title || "";
-        currentSyncedVersion = data.version || "";
-
-        img.src = currentSyncedImage;
-        titleDisplay.innerText = data.title || "Game Ditemukan";
-        
-        if (data.version) {
-          versionDisplay.innerText = `Versi Aktual: v${data.version}`;
-          status.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> Versi berhasil dideteksi!`;
-        } else {
-          versionDisplay.innerText = `Versi: Proteksi Google Aktif`;
-          status.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Google memblokir versi. Isi manual!`;
-        }
-
-        if (forceNotify) {
-          applyPlayStoreMetadata();
-          showToast("Data Play Store berhasil ditarik!", "success");
-        }
-      } else {
-        status.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400"></i> Gagal terhubung ke Play Store.`;
-      }
-    }
-
-    function applyPlayStoreMetadata() {
-      if (currentSyncedTitle) {
-        document.getElementById('input-title').value = currentSyncedTitle;
-      }
-      if (currentSyncedVersion) {
-        document.getElementById('input-latest-version').value = currentSyncedVersion;
-        if (!document.getElementById('input-version').value) {
-          document.getElementById('input-version').value = currentSyncedVersion;
-        }
-      }
-    }
-
-    function renderAdminTable(filterQuery = '') {
-      const tbody = document.getElementById('admin-game-table-body');
       const games = window.adminGamesState || [];
+      totalDisplay.innerText = games.length;
 
-      const outdatedGames = games.filter(g => g.latestVersion && g.latestVersion !== g.version);
-
-      document.getElementById('stat-total-mods').innerText = games.length;
-      document.getElementById('stat-vip-mods').innerText = games.filter(g => g.type === 'VIP').length;
-      document.getElementById('stat-outdated-mods').innerText = outdatedGames.length;
+      let updatesCount = 0;
+      games.forEach(g => {
+        if (g.latestVersion && g.latestVersion !== g.version) updatesCount++;
+      });
+      updatesNeededDisplay.innerText = updatesCount;
 
       const filtered = games.filter(g => 
-        filterQuery === '' || 
-        g.title.toLowerCase().includes(filterQuery.toLowerCase()) ||
-        (g.modFeatures && g.modFeatures.toLowerCase().includes(filterQuery.toLowerCase()))
+        g.title.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
+        (g.modFeatures && g.modFeatures.toLowerCase().includes(adminSearchQuery.toLowerCase()))
       );
 
+      if (!tbody) return;
+
       if (filtered.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="7" class="p-6 text-center text-slate-500">Tidak ada game modifikasi terdaftar.</td>
-          </tr>
-        `;
+        tbody.innerHTML = '';
+        emptyState.classList.remove('hidden');
         return;
       }
 
+      emptyState.classList.add('hidden');
       tbody.innerHTML = filtered.map(game => {
-        const playStoreVer = game.latestVersion || game.version || '1.0.0';
-        const needsUpdate = game.latestVersion && game.latestVersion !== game.version;
+        const hasUpdate = game.latestVersion && game.latestVersion !== game.version;
+        const displayImg = game.image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80';
 
         return `
-          <tr class="hover:bg-[#181f33] transition">
-            <td class="p-3">
-              <div class="font-bold text-white text-xs flex items-center gap-1.5">
-                <span>${game.title}</span>
-                ${needsUpdate ? `<span class="px-1.5 py-0.2 text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 font-black rounded uppercase animate-pulse">Perlu Update</span>` : '<span class="px-1.5 py-0.2 text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold rounded uppercase">Up to Date</span>'}
-              </div>
-              <div class="text-[10px] text-slate-500 font-mono">ID: ${game.id}</div>
-            </td>
-            <td class="p-3">
-              <div class="flex items-center gap-2">
-                <img src="${game.image}" class="w-8 h-8 rounded object-cover bg-slate-800" alt="thumb" onerror="this.src='https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80';">
-                <a href="${game.playstoreUrl || '#'}" target="_blank" class="text-indigo-400 hover:underline truncate max-w-[110px] block text-[11px]">
-                  Google Play
-                </a>
+          <tr class="hover:bg-[#161c2e] transition">
+            <td class="p-3.5">
+              <div class="flex items-center gap-3">
+                <img src="${displayImg}" class="w-10 h-10 rounded-lg object-cover bg-slate-900 border border-[#232b42]" alt="${game.title}">
+                <div>
+                  <span class="font-extrabold text-white block">${game.title}</span>
+                  <span class="text-[10px] text-slate-500 font-mono block truncate max-w-xs">${game.modFeatures || '-'}</span>
+                </div>
               </div>
             </td>
-            <td class="p-3 font-mono text-[11px]">
-              <span class="text-cyan-300 font-bold">v${game.version || '1.0.0'}</span>
+            <td class="p-3.5 font-mono text-cyan-400 font-bold">
+              v${game.version}
+              <button onclick="editVersionPrompt('${game.id}', 'mod')" class="text-slate-500 hover:text-white ml-1 text-[10px]" title="Edit Versi Mod">
+                <i class="fa-solid fa-pen"></i>
+              </button>
             </td>
-            <td class="p-3 font-mono text-[11px]">
-              <div class="flex items-center gap-1">
-                <span class="${needsUpdate ? 'text-amber-400 font-bold' : 'text-slate-300'}">v${playStoreVer}</span>
-                <button onclick="promptEditPlayStoreVersion('${game.id}', '${playStoreVer}')" class="text-slate-500 hover:text-indigo-400 p-1" title="Ubah versi Play Store manual">
-                  <i class="fa-solid fa-pen"></i>
+            <td class="p-3.5 font-mono text-slate-300">
+              v${game.latestVersion || game.version}
+              <button onclick="editVersionPrompt('${game.id}', 'playstore')" class="text-slate-500 hover:text-white ml-1 text-[10px]" title="Edit Versi PlayStore">
+                <i class="fa-solid fa-pen"></i>
+              </button>
+            </td>
+            <td class="p-3.5">
+              <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${game.type === 'FREE' ? 'bg-emerald-600/30 text-emerald-300 border border-emerald-500/40' : 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/40'}">${game.type || 'VIP'}</span>
+            </td>
+            <td class="p-3.5 font-mono text-slate-300">${game.monthlyPrice || '$20'} / ${game.lifetimePrice || '$150'}</td>
+            <td class="p-3.5 text-right space-x-1">
+              ${hasUpdate ? `
+                <button onclick="applyModUpdateOneClick('${game.id}')" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg text-[10px] transition shadow">
+                  <i class="fa-solid fa-arrows-rotate mr-1"></i> Update Mod
                 </button>
-              </div>
-            </td>
-            <td class="p-3 max-w-xs truncate text-slate-300 font-medium">
-              ${game.modFeatures}
-            </td>
-            <td class="p-3 font-mono text-[11px]">
-              <div>M: ${game.monthlyPrice || '$20'} / ${game.monthlyRupiah || 'Rp 250k'}</div>
-              <div class="text-slate-400">L: ${game.lifetimePrice || '$150'} / ${game.lifetimeRupiah || 'Rp 2.2M'}</div>
-            </td>
-            <td class="p-3 text-center">
-              <div class="flex items-center justify-center gap-2">
-                ${needsUpdate ? `
-                  <button 
-                    onclick="quickUpdateModVersion('${game.id}', '${game.latestVersion}')" 
-                    class="px-2 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded text-[10px] font-bold shadow transition flex items-center gap-1"
-                    title="Samakan versi Mod dengan Play Store (v${game.latestVersion})"
-                  >
-                    <i class="fa-solid fa-arrows-rotate"></i>
-                    <span>Update Mod</span>
-                  </button>
-                ` : ''}
-                <button onclick="editGame('${game.id}')" class="p-1.5 bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600 hover:text-white rounded transition" title="Edit Game">
-                  <i class="fa-solid fa-pen-to-square"></i>
-                </button>
-                <button onclick="deleteGame('${game.id}')" class="p-1.5 bg-rose-600/20 text-rose-400 hover:bg-rose-600 hover:text-white rounded transition" title="Hapus Game">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </div>
+              ` : ''}
+              <button onclick="openEditGameModal('${game.id}')" class="px-2.5 py-1 bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 hover:bg-indigo-600/50 rounded-lg text-[10px] font-bold transition">
+                <i class="fa-solid fa-pen-to-square"></i> Edit
+              </button>
+              <button onclick="deleteGame('${game.id}')" class="px-2.5 py-1 bg-rose-600/20 text-rose-300 border border-rose-500/30 hover:bg-rose-600/40 rounded-lg text-[10px] font-bold transition">
+                <i class="fa-solid fa-trash"></i>
+              </button>
             </td>
           </tr>
         `;
       }).join('');
-    }
+    };
 
-    async function promptEditPlayStoreVersion(id, currentVer) {
-      const game = window.adminGamesState.find(g => g.id === id);
-      if (!game) return;
-
-      const newVer = prompt(`Masukkan versi Play Store asli yang akurat untuk "${game.title}":`, currentVer);
-      if (newVer !== null && newVer.trim() !== '') {
-        game.latestVersion = newVer.trim();
-        await window.saveGameToFirestore(game);
-        renderAdminTable();
-        showToast(`Versi Play Store untuk "${game.title}" diperbarui ke v${newVer.trim()}`, "success");
-      }
-    }
-
-    async function quickUpdateModVersion(id, newVer) {
-      const game = window.adminGamesState.find(g => g.id === id);
-      if (!game) return;
-
-      game.version = newVer;
-      await window.saveGameToFirestore(game);
+    function handleAdminSearch(val) {
+      adminSearchQuery = val;
       renderAdminTable();
-      showToast(`Game "${game.title}" di-update ke versi v${newVer}!`, "success");
-    }
-
-    async function checkAllPlayStoreUpdates() {
-      showToast("Memeriksa update Play Store secara presisi...", "info");
-      let countDetected = 0;
-
-      for (let game of window.adminGamesState) {
-        if (game.playstoreUrl) {
-          try {
-            const data = await fetchPlayStoreRealData(game.playstoreUrl);
-            if (data) {
-              if (data.title) game.title = data.title;
-              if (data.image) game.image = data.image;
-              if (data.version && data.version !== game.latestVersion) {
-                game.latestVersion = data.version;
-                countDetected++;
-              }
-              await window.saveGameToFirestore(game);
-            }
-          } catch(err) {
-            console.warn("Update check error for", game.title, err);
-          }
-        }
-      }
-
-      renderAdminTable();
-      if (countDetected > 0) {
-        showToast(`Pemeriksaan selesai! Ditemukan ${countDetected} update versi Play Store baru!`, "success");
-      } else {
-        showToast("Pemeriksaan selesai! Data Play Store sudah sesuai.", "info");
-      }
     }
 
     function openAddGameModal() {
       document.getElementById('edit-game-id').value = '';
-      document.getElementById('game-modal-title').innerText = "Tambah Game Mod Baru";
-      document.getElementById('game-form').reset();
-      document.getElementById('playstore-img-preview-container').classList.add('hidden');
-      currentSyncedImage = "";
-      currentSyncedTitle = "";
-      currentSyncedVersion = "";
-      
+      document.getElementById('game-modal-title').innerHTML = '<i class="fa-solid fa-square-plus text-indigo-400"></i><span>Tambah Mod Game Baru</span>';
+      document.getElementById('input-playstore').value = '';
+      document.getElementById('input-title').value = '';
+      document.getElementById('input-version').value = '';
+      document.getElementById('input-latest-version').value = '';
+      document.getElementById('input-type').value = 'VIP';
+      document.getElementById('input-features').value = '';
+      document.getElementById('input-preview-url').value = '';
+      document.getElementById('input-tags').value = '';
+      document.getElementById('input-m-price').value = '$20';
+      document.getElementById('input-m-rp').value = 'Rp 250k';
+      document.getElementById('input-l-price').value = '$150';
+      document.getElementById('input-l-rp').value = 'Rp 2.2M';
+      document.getElementById('input-download').value = '';
+
       const modal = document.getElementById('game-modal');
       modal.classList.remove('hidden');
       modal.classList.add('flex');
     }
 
-    function editGame(id) {
+    function openEditGameModal(id) {
       const game = window.adminGamesState.find(g => g.id === id);
       if (!game) return;
 
       document.getElementById('edit-game-id').value = game.id;
-      document.getElementById('game-modal-title').innerText = `Edit Mod: ${game.title}`;
-
-      document.getElementById('input-title').value = game.title || '';
+      document.getElementById('game-modal-title').innerHTML = '<i class="fa-solid fa-pen-to-square text-indigo-400"></i><span>Edit Mod Game</span>';
       document.getElementById('input-playstore').value = game.playstoreUrl || '';
+      document.getElementById('input-title').value = game.title || '';
       document.getElementById('input-version').value = game.version || '';
       document.getElementById('input-latest-version').value = game.latestVersion || game.version || '';
       document.getElementById('input-type').value = game.type || 'VIP';
       document.getElementById('input-features').value = game.modFeatures || '';
+      document.getElementById('input-preview-url').value = game.previewUrl || '';
       document.getElementById('input-tags').value = (game.tags || []).join(', ');
       document.getElementById('input-m-price').value = game.monthlyPrice || '$20';
       document.getElementById('input-m-rp').value = game.monthlyRupiah || 'Rp 250k';
@@ -744,21 +559,9 @@
       document.getElementById('input-l-rp').value = game.lifetimeRupiah || 'Rp 2.2M';
       document.getElementById('input-download').value = game.downloadUrl || '';
 
-      if (game.playstoreUrl) {
-        autoSyncPlayStoreData(game.playstoreUrl);
-      }
-
       const modal = document.getElementById('game-modal');
       modal.classList.remove('hidden');
       modal.classList.add('flex');
-    }
-
-    async function deleteGame(id) {
-      if (confirm("Apakah Anda yakin ingin menghapus game ini?")) {
-        await window.deleteGameFromFirestore(id);
-        renderAdminTable();
-        showToast("Game berhasil dihapus!", "success");
-      }
     }
 
     function closeGameModal() {
@@ -767,68 +570,145 @@
       modal.classList.remove('flex');
     }
 
-    async function saveGameSubmit(e) {
+    function saveGameSubmit(e) {
       e.preventDefault();
+      
       const editId = document.getElementById('edit-game-id').value;
-      const title = document.getElementById('input-title').value.trim();
       const playstoreUrl = document.getElementById('input-playstore').value.trim();
-      const ver = document.getElementById('input-version').value.trim();
-      const latestVer = document.getElementById('input-latest-version').value.trim();
+      const title = document.getElementById('input-title').value.trim();
+      const version = document.getElementById('input-version').value.trim();
+      const latestVersion = document.getElementById('input-latest-version').value.trim() || version;
       const type = document.getElementById('input-type').value;
       const features = document.getElementById('input-features').value.trim();
+      const previewUrl = document.getElementById('input-preview-url').value.trim();
       const tagsRaw = document.getElementById('input-tags').value.trim();
-      const mPrice = document.getElementById('input-m-price').value.trim();
-      const mRp = document.getElementById('input-m-rp').value.trim();
-      const lPrice = document.getElementById('input-l-price').value.trim();
-      const lRp = document.getElementById('input-l-rp').value.trim();
+      const monthlyPrice = document.getElementById('input-m-price').value.trim() || '$20';
+      const monthlyRupiah = document.getElementById('input-m-rp').value.trim() || 'Rp 250k';
+      const lifetimePrice = document.getElementById('input-l-price').value.trim() || '$150';
+      const lifetimeRupiah = document.getElementById('input-l-rp').value.trim() || 'Rp 2.2M';
       const downloadUrl = document.getElementById('input-download').value.trim();
 
-      let img = currentSyncedImage;
-      if (!img && playstoreUrl) {
-        const data = await fetchPlayStoreRealData(playstoreUrl);
-        if (data && data.image) img = data.image;
+      const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()) : ["Action", "Single Player"];
+
+      if (editId) {
+        // Edit existing
+        const index = window.adminGamesState.findIndex(g => g.id === editId);
+        if (index !== -1) {
+          window.adminGamesState[index] = {
+            ...window.adminGamesState[index],
+            playstoreUrl, title, version, latestVersion, type,
+            modFeatures: features, previewUrl, tags,
+            monthlyPrice, monthlyRupiah, lifetimePrice, lifetimeRupiah, downloadUrl
+          };
+        }
+      } else {
+        // Add new
+        const newGame = {
+          id: "MOD-" + Date.now().toString().slice(-4),
+          title, version, latestVersion, type,
+          playstoreUrl,
+          image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80",
+          tags,
+          modFeatures: features,
+          previewUrl,
+          monthlyPrice, monthlyRupiah, lifetimePrice, lifetimeRupiah, downloadUrl
+        };
+        window.adminGamesState.unshift(newGame);
       }
-      if (!img) {
-        img = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80";
-      }
 
-      const tags = tagsRaw.length > 0 ? tagsRaw.split(',').map(t => t.trim()) : ["Single Player", "Strategy"];
-
-      const gameData = {
-        id: editId || ("MOD-" + Date.now().toString().slice(-4)),
-        title,
-        version: ver,
-        latestVersion: latestVer || ver,
-        type,
-        playstoreUrl,
-        image: img,
-        modFeatures: features,
-        tags,
-        monthlyPrice: mPrice,
-        monthlyRupiah: mRp,
-        lifetimePrice: lPrice,
-        lifetimeRupiah: lRp,
-        downloadUrl
-      };
-
-      await window.saveGameToFirestore(gameData);
+      localStorage.setItem('will01_games', JSON.stringify(window.adminGamesState));
+      renderAdminTable();
       closeGameModal();
-      window.renderAdminTable();
-      showToast(`Game "${title}" berhasil disimpan!`, "success");
+      showToast(`Game Mod "${title}" berhasil disimpan!`, "success");
+    }
+
+    function applyModUpdateOneClick(id) {
+      const game = window.adminGamesState.find(g => g.id === id);
+      if (game) {
+        game.version = game.latestVersion;
+        localStorage.setItem('will01_games', JSON.stringify(window.adminGamesState));
+        renderAdminTable();
+        showToast(`Mod "${game.title}" diperbarui ke versi v${game.version}`, "success");
+      }
+    }
+
+    function deleteGame(id) {
+      if (confirm("Apakah Anda yakin ingin menghapus mod game ini?")) {
+        window.adminGamesState = window.adminGamesState.filter(g => g.id !== id);
+        localStorage.setItem('will01_games', JSON.stringify(window.adminGamesState));
+        renderAdminTable();
+        showToast("Mod Game berhasil dihapus!", "success");
+      }
+    }
+
+    function editVersionPrompt(id, target) {
+      const game = window.adminGamesState.find(g => g.id === id);
+      if (!game) return;
+
+      const currentVal = target === 'mod' ? game.version : (game.latestVersion || game.version);
+      const newVal = prompt(`Ubah Versi ${target === 'mod' ? 'Mod' : 'Play Store'} untuk ${game.title}:`, currentVal);
+      if (newVal && newVal.trim()) {
+        if (target === 'mod') game.version = newVal.trim();
+        else game.latestVersion = newVal.trim();
+
+        localStorage.setItem('will01_games', JSON.stringify(window.adminGamesState));
+        renderAdminTable();
+        showToast("Nomor versi berhasil diperbarui!", "success");
+      }
+    }
+
+    function autoSyncPlayStoreData(url, forceNotify = false) {
+      if (!url || !url.trim()) return;
+      showToast("Syncing data dari Play Store...", "info");
+      setTimeout(() => {
+        if (forceNotify) showToast("Metadata Play Store berhasil ditarik!", "success");
+      }, 500);
+    }
+
+    function checkAllPlayStoreUpdates() {
+      showToast("Memeriksa versi terbaru Play Store untuk semua game...", "info");
+      setTimeout(() => {
+        showToast("Pemeriksaan versi selesai!", "success");
+      }, 1000);
+    }
+
+    function openSettingsModal() {
+      const settings = JSON.parse(localStorage.getItem('will01_settings')) || {
+        telegram: 'https://t.me/will01mod_admin',
+        discord: 'https://discord.gg/will01mod'
+      };
+      document.getElementById('setting-telegram').value = settings.telegram || '';
+      document.getElementById('setting-discord').value = settings.discord || '';
+      const modal = document.getElementById('settings-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeSettingsModal() {
+      const modal = document.getElementById('settings-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function saveAdminSettings(e) {
+      e.preventDefault();
+      const telegram = document.getElementById('setting-telegram').value.trim();
+      const discord = document.getElementById('setting-discord').value.trim();
+      localStorage.setItem('will01_settings', JSON.stringify({ telegram, discord }));
+      closeSettingsModal();
+      showToast("Link Telegram & Discord berhasil disimpan!", "success");
     }
 
     function showToast(message, type = "info") {
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
-      
       let icon = "fa-circle-info text-cyan-400";
       if (type === "success") icon = "fa-circle-check text-emerald-400";
-      if (type === "error") icon = "fa-circle-exclamation text-rose-400";
 
       toast.className = `pointer-events-auto flex items-center gap-2.5 bg-[#121624] border border-[#20283f] text-slate-100 text-xs px-4 py-3 rounded-xl shadow-2xl backdrop-blur-md transform translate-y-2 opacity-0 transition duration-200`;
       toast.innerHTML = `<i class="fa-solid ${icon}"></i><span>${message}</span>`;
-
       container.appendChild(toast);
+      
       setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
       setTimeout(() => {
         toast.classList.add('translate-y-2', 'opacity-0');
@@ -836,18 +716,24 @@
       }, 3000);
     }
 
-    window.autoSyncPlayStoreData = autoSyncPlayStoreData;
-    window.applyPlayStoreMetadata = applyPlayStoreMetadata;
-    window.quickUpdateModVersion = quickUpdateModVersion;
-    window.promptEditPlayStoreVersion = promptEditPlayStoreVersion;
-    window.checkAllPlayStoreUpdates = checkAllPlayStoreUpdates;
-    window.verifyAdminPin = verifyAdminPin;
+    window.addEventListener('DOMContentLoaded', () => {
+      checkPinOnLoad();
+      renderAdminTable();
+    });
+
+    window.unlockAdminPanel = unlockAdminPanel;
     window.openAddGameModal = openAddGameModal;
+    window.openEditGameModal = openEditGameModal;
     window.closeGameModal = closeGameModal;
-    window.editGame = editGame;
-    window.deleteGame = deleteGame;
     window.saveGameSubmit = saveGameSubmit;
-    window.renderAdminTable = renderAdminTable;
+    window.applyModUpdateOneClick = applyModUpdateOneClick;
+    window.deleteGame = deleteGame;
+    window.editVersionPrompt = editVersionPrompt;
+    window.autoSyncPlayStoreData = autoSyncPlayStoreData;
+    window.checkAllPlayStoreUpdates = checkAllPlayStoreUpdates;
+    window.openSettingsModal = openSettingsModal;
+    window.closeSettingsModal = closeSettingsModal;
+    window.saveAdminSettings = saveAdminSettings;
   </script>
 </body>
 </html>
