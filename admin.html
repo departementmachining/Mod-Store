@@ -49,18 +49,13 @@
       border: 1px solid #1e2538;
       border-radius: 1rem;
     }
-    .btn-purple {
-      background: linear-gradient(135deg, #635bff 0%, #4f46e5 100%);
-    }
-    .btn-purple:hover {
-      background: linear-gradient(135deg, #726aff 0%, #5d53f5 100%);
-    }
   </style>
 </head>
 <body class="font-sans min-h-screen flex flex-col selection:bg-indigo-600 selection:text-white">
 
   <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
 
+  <!-- Admin Login Overlay -->
   <div id="admin-login-screen" class="fixed inset-0 bg-[#0a0d14] z-50 flex items-center justify-center p-4">
     <div class="card-dark w-full max-w-sm p-6 text-center shadow-2xl relative">
       <div class="w-14 h-14 rounded-2xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center mx-auto mb-4 text-2xl shadow-lg">
@@ -86,6 +81,7 @@
     </div>
   </div>
 
+  <!-- Admin Main Layout -->
   <div id="admin-dashboard-layout" class="hidden flex-col min-h-screen">
 
     <header class="sticky top-0 z-40 bg-[#0a0d14]/90 backdrop-blur-md border-b border-[#181e30]">
@@ -109,7 +105,7 @@
             </div>
 
             <button onclick="openSettingsModal()" class="px-3 py-1.5 bg-[#171d2e] hover:bg-[#20273d] text-slate-200 border border-[#232b42] rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
-              <i class="fa-solid fa-[#fa-brands fa-telegram] text-indigo-400"></i>
+              <i class="fa-solid fa-paper-plane text-indigo-400"></i>
               <span>Link Medsos</span>
             </button>
 
@@ -129,6 +125,7 @@
 
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
       
+      <!-- Summary Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div class="card-dark p-4 flex items-center justify-between">
           <div>
@@ -164,7 +161,7 @@
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div>
           <h1 class="text-lg font-bold text-white tracking-tight">Katalog Mod Game</h1>
-          <p class="text-xs text-slate-400">Kelola daftar mod, harga, sync versi Play Store, dan link file download</p>
+          <p class="text-xs text-slate-400">Kelola daftar mod, harga, sync versi & kategori Play Store, dan link file download</p>
         </div>
 
         <div class="flex items-center gap-2">
@@ -175,6 +172,7 @@
         </div>
       </div>
 
+      <!-- Games Table -->
       <div class="card-dark overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-slate-300">
@@ -197,6 +195,7 @@
     </main>
   </div>
 
+  <!-- Game Add/Edit Modal -->
   <div id="game-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden items-center justify-center p-4">
     <div class="card-dark w-full max-w-lg p-5 relative shadow-2xl text-xs max-h-[90vh] overflow-y-auto">
       
@@ -206,6 +205,7 @@
 
       <h3 id="modal-game-title" class="text-sm font-bold text-white mb-3">Tambah Mod Game Baru</h3>
 
+      <!-- Auto-Sync Box -->
       <div class="p-3 bg-[#171d2e] border border-[#232b45] rounded-xl mb-4 space-y-2">
         <label class="block text-[10px] font-bold text-cyan-400 uppercase tracking-wider">
           <i class="fa-solid fa-bolt mr-1"></i> Auto-Sync Play Store (Server Scraper API)
@@ -227,7 +227,7 @@
             <span>Sync</span>
           </button>
         </div>
-        <p class="text-[10px] text-slate-400">Menarik Nama Game, Gambar HD, Versi Play Store, dan Tags secara otomatis dari server.</p>
+        <p class="text-[10px] text-slate-400">Menarik Nama Game, Gambar HD, Versi Terbaru, dan Tags Kategori secara otomatis dari Play Store.</p>
       </div>
 
       <form onsubmit="handleGameSubmit(event)" class="space-y-3">
@@ -310,6 +310,7 @@
     </div>
   </div>
 
+  <!-- Medsos Settings Modal -->
   <div id="settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden items-center justify-center p-4">
     <div class="card-dark w-full max-w-md p-5 relative shadow-2xl text-xs">
       <button onclick="closeSettingsModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
@@ -336,6 +337,7 @@
     </div>
   </div>
 
+  <!-- Firebase Integration Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -594,8 +596,13 @@
           }
           if (result.image) document.getElementById('form-image').value = result.image;
           
+          // Auto-fill Tags Kategori
+          if (result.tags && result.tags.length > 0) {
+            document.getElementById('form-tags').value = Array.isArray(result.tags) ? result.tags.join(', ') : result.tags;
+          }
+          
           document.getElementById('form-playstore-url').value = urlInput;
-          showToast("Sync Play Store berhasil!", "success");
+          showToast("Sync Play Store (Versi, Gambar & Tags) berhasil!", "success");
         } else {
           showToast(result.message || "Gagal mengambil data Play Store", "info");
         }
