@@ -114,9 +114,6 @@
 </head>
 <body class="font-sans min-h-screen flex flex-col selection:bg-indigo-600 selection:text-white">
 
-  <!-- Toast Notification Container -->
-  <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
-
   <header class="sticky top-0 z-40 bg-[#0a0d14]/90 backdrop-blur-md border-b border-[#181e30]">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
@@ -134,7 +131,6 @@
           <button onclick="filterByNavPlan('ALL')" id="nav-btn-all" class="text-indigo-400 font-bold transition">All Mods</button>
           <button onclick="filterByNavPlan('MONTHLY')" id="nav-btn-monthly" class="hover:text-white transition">VIP Monthly</button>
           <button onclick="filterByNavPlan('LIFETIME')" id="nav-btn-lifetime" class="hover:text-white transition">VIP Lifetime</button>
-          <a href="#" onclick="openTermsModal(event)" class="hover:text-white transition">Terms of Use</a>
           
           <div class="relative">
             <select id="game-type-select" onchange="handleGameTypeFilter(this.value)" class="bg-[#121624] border border-[#222a40] text-slate-200 text-xs px-3 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 cursor-pointer font-semibold uppercase">
@@ -163,7 +159,7 @@
       </h1>
       
       <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#121828] border border-[#1e2740] text-xs text-slate-300 mt-1">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="stat-live-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
         <span><strong id="mod-count-display" class="text-white">0</strong> List mods ready</span>
       </div>
 
@@ -231,7 +227,7 @@
       </button>
 
       <div class="flex items-start gap-3 mb-4">
-        <img id="buy-modal-icon" src="" class="w-12 h-12 rounded-xl object-cover bg-slate-800 border border-[#20283f]" alt="Game Icon">
+        <img id="buy-modal-icon" src="" class="w-12 h-12 rounded-xl object-cover bg-slate-800 border border-[#20283f]" alt="Game Icon" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80';">
         <div>
           <span class="text-[10px] text-slate-400 uppercase font-semibold block tracking-wider">YOU'RE PURCHASING</span>
           <h3 id="buy-modal-title" class="text-sm font-bold text-white mt-0.5">Game Title</h3>
@@ -288,14 +284,14 @@
         <div>
           <span class="font-bold text-amber-300 text-[11px] block">Before you proceed</span>
           <p class="text-[10px] text-slate-400 mt-0.5 leading-relaxed">
-            By continuing, you acknowledge that you have read and agree to our <a href="#" onclick="openTermsModal(event)" class="text-indigo-400 underline">Terms of Use</a>. All transactions are final and non-refundable.
+            By continuing, you acknowledge that you have read and agree to our Terms of Use. All transactions are final and non-refundable.
           </p>
         </div>
       </div>
 
       <label class="flex items-center gap-2 cursor-pointer mb-4 text-slate-300 text-[11px]">
         <input type="checkbox" id="terms-checkbox" onchange="handleTermsCheck(this.checked)" class="rounded bg-[#181e30] border-[#2a3452] text-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer">
-        <span>I have read and agree to the <a href="#" onclick="openTermsModal(event)" class="text-indigo-400 underline">Terms of Use</a>. I understand the risks involved.</span>
+        <span>I have read and agree to the Terms of Use. I understand the risks involved.</span>
       </label>
 
       <div id="buy-lock-notice" class="p-3 bg-[#171c2d] border border-[#232b45] rounded-xl text-center text-[11px] text-slate-400 font-medium mb-3">
@@ -329,16 +325,6 @@
         </button>
       </div>
 
-      <div class="mt-2">
-        <button 
-          onclick="openTermsModal(event)"
-          class="w-full py-2.5 rounded-xl font-semibold text-xs text-slate-300 bg-[#161c2d] hover:bg-[#1d253b] border border-[#242e47] transition flex items-center justify-center gap-1.5"
-        >
-          <i class="fa-solid fa-file-contract text-slate-400"></i>
-          <span>Read Full Terms of Use</span>
-        </button>
-      </div>
-
     </div>
   </div>
 
@@ -356,9 +342,7 @@
       appId: "1:319704239889:web:2e11077cb7ec7787bb86b0"
     };
 
-    const appId = firebaseConfig.projectId || 'mod-store-c24a3';
     let db = null;
-    let auth = null;
 
     const INITIAL_GAMES = [
       {
@@ -384,28 +368,40 @@
     async function setupFirebase() {
       try {
         const app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
         db = getFirestore(app);
-        await signInAnonymously(auth);
 
-        const gamesRef = collection(db, 'artifacts', appId, 'public', 'data', 'games');
+        // Attempt non-blocking anonymous auth
+        try {
+          const auth = getAuth(app);
+          await signInAnonymously(auth);
+        } catch (e) {
+          console.warn("Auth Anonymously skipped, using public Firestore access:", e);
+        }
+
+        const gamesRef = collection(db, 'games');
         onSnapshot(gamesRef, (snapshot) => {
           const fetched = [];
           snapshot.forEach(docSnap => {
             fetched.push({ id: docSnap.id, ...docSnap.data() });
           });
+          
+          const dot = document.getElementById('stat-live-dot');
+
           if (fetched.length > 0) {
             window.gamesState = fetched;
             localStorage.setItem('will01_games', JSON.stringify(fetched));
+            if (dot) dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
           }
-          window.renderGames();
+          if (window.renderGames) window.renderGames();
         }, (err) => {
-          console.error("Firestore Error:", err);
-          window.renderGames();
+          console.error("Firestore Listener Error:", err);
+          const dot = document.getElementById('stat-live-dot');
+          if (dot) dot.className = "w-2 h-2 rounded-full bg-amber-400";
+          if (window.renderGames) window.renderGames();
         });
       } catch (err) {
         console.warn("Fallback LocalStorage:", err);
-        window.renderGames();
+        if (window.renderGames) window.renderGames();
       }
     }
 
@@ -459,17 +455,19 @@
       const counter = document.getElementById('mod-count-display');
       
       const games = window.gamesState || [];
-      counter.innerText = games.length;
+      if (counter) counter.innerText = games.length;
 
       const filtered = filterGames();
 
+      if (!container) return;
+
       if (filtered.length === 0) {
         container.innerHTML = '';
-        empty.classList.remove('hidden');
+        if (empty) empty.classList.remove('hidden');
         return;
       }
 
-      empty.classList.add('hidden');
+      if (empty) empty.classList.add('hidden');
       container.innerHTML = filtered.map(game => {
         const displayImage = game.image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80';
         const playStoreVer = game.latestVersion || game.version || '1.0.0';
@@ -598,9 +596,12 @@
       selectedTag = 'ALL';
       selectedGameType = 'ALL';
       selectedNavPlan = 'ALL';
-      document.getElementById('search-input').value = '';
-      document.getElementById('tag-filter-select').value = 'ALL';
-      document.getElementById('game-type-select').value = 'ALL';
+      const searchInput = document.getElementById('search-input');
+      const tagSelect = document.getElementById('tag-filter-select');
+      const typeSelect = document.getElementById('game-type-select');
+      if (searchInput) searchInput.value = '';
+      if (tagSelect) tagSelect.value = 'ALL';
+      if (typeSelect) typeSelect.value = 'ALL';
       filterByNavPlan('ALL');
     }
 
@@ -613,9 +614,9 @@
       selectedPlan = 'monthly';
 
       document.getElementById('buy-modal-title').innerText = game.title;
-      document.getElementById('buy-modal-ver').innerText = `v${game.version}`;
+      document.getElementById('buy-modal-ver').innerText = `v${game.version || '1.0.0'}`;
       document.getElementById('buy-modal-type').innerText = game.type || 'VIP';
-      document.getElementById('buy-modal-icon').src = game.image;
+      document.getElementById('buy-modal-icon').src = game.image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80';
 
       document.getElementById('plan-monthly-price').innerText = game.monthlyPrice || '$20';
       document.getElementById('plan-monthly-rp').innerText = ` / ${game.monthlyRupiah || 'Rp 250k'}`;
@@ -625,18 +626,22 @@
       selectPlan('monthly');
 
       const cb = document.getElementById('terms-checkbox');
-      cb.checked = false;
+      if (cb) cb.checked = false;
       handleTermsCheck(false);
 
       const modal = document.getElementById('buy-modal');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
     }
 
     function closeBuyModal() {
       const modal = document.getElementById('buy-modal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
     }
 
     function selectPlan(plan) {
@@ -647,15 +652,15 @@
       const checkL = document.getElementById('check-lifetime');
 
       if (plan === 'monthly') {
-        monthlyBox.classList.add('selected');
-        lifetimeBox.classList.remove('selected');
-        checkM.className = 'fa-solid fa-circle-check text-indigo-500 text-xs';
-        checkL.className = 'fa-regular fa-circle text-slate-600 text-xs';
+        if (monthlyBox) monthlyBox.classList.add('selected');
+        if (lifetimeBox) lifetimeBox.classList.remove('selected');
+        if (checkM) checkM.className = 'fa-solid fa-circle-check text-indigo-500 text-xs';
+        if (checkL) checkL.className = 'fa-regular fa-circle text-slate-600 text-xs';
       } else {
-        lifetimeBox.classList.add('selected');
-        monthlyBox.classList.remove('selected');
-        checkL.className = 'fa-solid fa-circle-check text-indigo-500 text-xs';
-        checkM.className = 'fa-regular fa-circle text-slate-600 text-xs';
+        if (lifetimeBox) lifetimeBox.classList.add('selected');
+        if (monthlyBox) monthlyBox.classList.remove('selected');
+        if (checkL) checkL.className = 'fa-solid fa-circle-check text-indigo-500 text-xs';
+        if (checkM) checkM.className = 'fa-regular fa-circle text-slate-600 text-xs';
       }
     }
 
@@ -664,11 +669,11 @@
       const buyContainer = document.getElementById('buy-buttons-container');
 
       if (checked) {
-        lockNotice.classList.add('hidden');
-        buyContainer.classList.remove('hidden');
+        if (lockNotice) lockNotice.classList.add('hidden');
+        if (buyContainer) buyContainer.classList.remove('hidden');
       } else {
-        lockNotice.classList.remove('hidden');
-        buyContainer.classList.add('hidden');
+        if (lockNotice) lockNotice.classList.remove('hidden');
+        if (buyContainer) buyContainer.classList.add('hidden');
       }
     }
 
@@ -683,10 +688,10 @@
       const textMsg = encodeURIComponent(`Halo Admin, saya ingin membeli ${planName} untuk game: ${gameTitle}`);
 
       if (platform === 'telegram') {
-        const tgBase = settings.telegram || 'https://t.me';
+        const tgBase = settings.telegram || 'https://t.me/will01mod_admin';
         window.open(`${tgBase}?text=${textMsg}`, '_blank');
       } else {
-        const dcBase = settings.discord || 'https://discord.gg';
+        const dcBase = settings.discord || 'https://discord.gg/will01mod';
         window.open(dcBase, '_blank');
       }
 
