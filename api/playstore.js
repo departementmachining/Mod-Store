@@ -1,5 +1,5 @@
 /**
- * Serverless API Endpoint untuk Scraping Metadata & Versi Play Store
+ * Serverless API Endpoint untuk Scraping Metadata, Versi, Gambar & Tag Kategori Play Store
  * Path: /api/playstore.js
  */
 
@@ -36,19 +36,34 @@ module.exports = async (req, res) => {
     let title = '';
     let version = '';
     let image = '';
+    let tags = [];
 
-    // 1. Coba ekstraksi dari JSON-LD
+    // 1. Ekstraksi dari JSON-LD (Metadata Utama Google)
     const jsonLdMatch = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi);
     if (jsonLdMatch) {
       for (const block of jsonLdMatch) {
         try {
           const raw = block.replace(/<script type="application\/ld\+json">/i, '').replace(/<\/script>/i, '').trim();
           const parsed = JSON.parse(raw);
-          if (parsed['@type'] === 'SoftwareApplication' || parsed.softwareVersion || parsed.image) {
+          if (parsed['@type'] === 'SoftwareApplication' || parsed.softwareVersion || parsed.image || parsed.applicationCategory) {
             title = parsed.name || title;
             version = parsed.softwareVersion || version;
             if (parsed.image) {
               image = typeof parsed.image === 'string' ? parsed.image : (parsed.image.url || image);
+            }
+
+            // Ambik Kategori / Genre dari JSON-LD
+            if (parsed.applicationCategory) {
+              let cat = parsed.applicationCategory.replace(/^GAME_/i, '').replace(/_/g, ' ');
+              cat = cat.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+              if (cat && !tags.includes(cat)) tags.push(cat);
+            }
+            if (parsed.genre) {
+              if (Array.isArray(parsed.genre)) {
+                parsed.genre.forEach(g => { if (g && !tags.includes(g)) tags.push(g); });
+              } else if (typeof parsed.genre === 'string' && !tags.includes(parsed.genre)) {
+                tags.push(parsed.genre);
+              }
             }
             break;
           }
@@ -58,7 +73,22 @@ module.exports = async (req, res) => {
       }
     }
 
-    // 2. Fallback Judul
+    // 2. Ekstraksi Genre / Tag dari Tag HTML Play Store
+    const genreRegexp = /itemprop="genre"[^>]*>([^<]+)</gi;
+    let matchGenre;
+    while ((matchGenre = genreRegexp.exec(html)) !== null) {
+      const g = matchGenre[1].trim();
+      if (g && !tags.includes(g)) tags.push(g);
+    }
+
+    const categoryLinkRegexp = /\/store\/apps\/category\/GAME_[A-Z_]+[^>]*>[\s\S]*?<span[^>]*>([^<]+)<\/span>/gi;
+    let matchCatLink;
+    while ((matchCatLink = categoryLinkRegexp.exec(html)) !== null) {
+      const g = matchCatLink[1].trim();
+      if (g && !tags.includes(g)) tags.push(g);
+    }
+
+    // 3. Fallback Judul
     if (!title) {
       const titleMatch = html.match(/<meta property="og:title" content="([^"]+)"/i) || html.match(/<title>([^<]+)<\/title>/i);
       if (titleMatch) {
@@ -69,7 +99,7 @@ module.exports = async (req, res) => {
       }
     }
 
-    // 3. Fallback Gambar Ikon / Banner Play Store
+    // 4. Fallback Gambar Ikon / Banner Play Store (HD Resolution)
     if (!image) {
       const imgMatch = html.match(/<meta property="og:image" content="([^"]+)"/i) || 
                        html.match(/<meta name="twitter:image" content="([^"]+)"/i) ||
@@ -77,7 +107,14 @@ module.exports = async (req, res) => {
       if (imgMatch) image = imgMatch[1];
     }
 
-    // 4. Fallback Versi Play Store
+    if (image) {
+      image = image.replace(/&amp;/g, '&');
+      if (image.includes('googleusercontent.com')) {
+        image = image.split('=')[0] + '=s512';
+      }
+    }
+
+    // 5. Fallback Versi Play Store
     if (!version) {
       const verMatch = html.match(/\[\[\["(\d+\.\d+[\.\d]*)"\]/) ||
                        html.match(/"softwareVersion"\s*:\s*"([^"]+)"/i) ||
@@ -88,20 +125,27 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Pembersihan URL Gambar Play Store agar HD dan valid
-    if (image) {
-      image = image.replace(/&amp;/g, '&');
-      if (image.includes('googleusercontent.com')) {
-        // Ambil URL dasar sebelum tanda '=' lalu format ke resolusi HD 512px
-        image = image.split('=')[0] + '=s512';
-      }
+    // 6. Detection Kata Kunci Genre jika tags masih kosong
+    if (tags.length === 0) {
+      const combinedText = (title + ' ' + html).toLowerCase();
+      const knownGenres = ['Action RPG', 'Role Playing', 'Strategy', 'Tower Defense', 'Idle RPG', 'Single Player', 'Simulation', 'Anime', 'Casual', 'PvP', 'Offline', 'Co-op', 'Stylized'];
+      knownGenres.forEach(kg => {
+        if (combinedText.includes(kg.toLowerCase()) && !tags.includes(kg)) {
+          tags.push(kg);
+        }
+      });
+    }
+
+    if (tags.length === 0) {
+      tags = ['Action RPG', 'Single Player'];
     }
 
     return res.status(200).json({
       status: 'success',
       title: title || 'Game Mod',
       version: version || '1.0.0',
-      image: image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80'
+      image: image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80',
+      tags: tags
     });
 
   } catch (error) {
