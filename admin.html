@@ -59,7 +59,6 @@
 </head>
 <body class="font-sans min-h-screen flex flex-col selection:bg-indigo-600 selection:text-white pb-12">
 
-  <!-- Admin Login Screen (Tampil saat pertama masuk) -->
   <div id="admin-login-screen" class="min-h-screen flex items-center justify-center p-4 bg-[#0a0d14]">
     <div class="bg-[#121624] border border-[#1e2538] rounded-2xl w-full max-w-sm p-6 sm:p-8 text-center shadow-2xl">
       <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-cyan-500 text-white flex items-center justify-center mx-auto mb-5 text-2xl shadow-lg shadow-indigo-500/20">
@@ -97,10 +96,8 @@
     </div>
   </div>
 
-  <!-- Main Admin Dashboard Container (Hidden until logged in) -->
   <div id="admin-main-panel" class="hidden flex-col min-h-screen">
 
-    <!-- Toast Notification Container -->
     <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
 
     <!-- Header -->
@@ -209,7 +206,7 @@
                 </tr>
               </thead>
               <tbody id="admin-table-body" class="divide-y divide-[#1e2538] text-xs">
-                <!-- Injected dynamically via JS -->
+                <!-- Injected dynamically -->
               </tbody>
             </table>
           </div>
@@ -223,7 +220,6 @@
 
     </main>
 
-    <!-- Modal Tambah / Edit Game -->
     <div id="game-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden items-center justify-center p-4">
       <div class="bg-[#121624] border border-[#1e263d] rounded-2xl w-full max-w-xl p-5 relative shadow-2xl max-h-[90vh] overflow-y-auto">
         
@@ -242,7 +238,7 @@
 
           <div>
             <label class="block text-slate-300 font-bold mb-1">
-              URL Google Play Store <span class="text-indigo-400">(Otomatis Sync)</span>
+              URL Google Play Store <span class="text-indigo-400">(Server Auto Sync)</span>
             </label>
             <div class="flex gap-2">
               <input 
@@ -329,7 +325,6 @@
       </div>
     </div>
 
-    <!-- Modal Settings Medsos -->
     <div id="settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden items-center justify-center p-4">
       <div class="bg-[#121624] border border-[#1e263d] rounded-2xl w-full max-w-md p-5 relative shadow-2xl">
         <div class="flex justify-between items-center pb-3 border-b border-[#1e263d] mb-4">
@@ -361,7 +356,6 @@
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // Konfigurasi Firebase Resmi Anda
     const firebaseConfig = {
       apiKey: "AIzaSyAqJF91DDwhXt_tgha6uv_SM7ToZcZO_kQ",
       authDomain: "mod-store-c24a3.firebaseapp.com",
@@ -401,7 +395,6 @@
       }
     }
 
-    // Helper Fungsi untuk Simpan / Update ke Cloud Database
     window.saveGameToFirestore = async function(gameData) {
       if (db) {
         try {
@@ -413,7 +406,6 @@
       }
     };
 
-    // Helper Fungsi untuk Hapus Game dari Cloud Database
     window.deleteGameFromFirestore = async function(gameId) {
       if (db) {
         try {
@@ -446,30 +438,12 @@
         lifetimePrice: "$150",
         lifetimeRupiah: "Rp 2.2M",
         downloadUrl: "https://github.com/example/mod-apk-desertwarrior"
-      },
-      {
-        id: "MOD-002",
-        title: "Wicked Defense",
-        version: "1.1.7",
-        latestVersion: "1.2.4",
-        type: "VIP",
-        playstoreUrl: "https://play.google.com/store/apps/details?id=com.supercell.clashofclans",
-        image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80",
-        tags: ["Single Player", "Strategy", "Tower Defense"],
-        modFeatures: "Menu, Auto Win, Speed Game",
-        previewUrl: "",
-        monthlyPrice: "$20",
-        monthlyRupiah: "Rp 250k",
-        lifetimePrice: "$150",
-        lifetimeRupiah: "Rp 2.2M",
-        downloadUrl: "https://github.com/example/mod-apk-wicked"
       }
     ];
 
     window.adminGamesState = JSON.parse(localStorage.getItem('will01_games')) || INITIAL_GAMES;
     let adminSearchQuery = '';
 
-    // PIN Authentication Handler
     function unlockAdminPanel(e) {
       if (e) e.preventDefault();
       const inputPin = document.getElementById('pin-input').value.trim();
@@ -477,7 +451,7 @@
       const loginScreen = document.getElementById('admin-login-screen');
       const mainPanel = document.getElementById('admin-main-panel');
 
-      if (inputPin === "1234") { // Default Admin PIN
+      if (inputPin === "1234") {
         loginScreen.classList.add('hidden');
         loginScreen.classList.remove('flex');
         mainPanel.classList.remove('hidden');
@@ -661,11 +635,9 @@
       const downloadUrl = document.getElementById('input-download').value.trim();
 
       const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()) : ["Action", "Single Player"];
-
       let updatedGame = null;
 
       if (editId) {
-        // Edit existing
         const index = window.adminGamesState.findIndex(g => g.id === editId);
         if (index !== -1) {
           updatedGame = {
@@ -677,12 +649,11 @@
           window.adminGamesState[index] = updatedGame;
         }
       } else {
-        // Add new
         updatedGame = {
           id: "MOD-" + Date.now().toString().slice(-4),
           title, version, latestVersion, type,
           playstoreUrl,
-          image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80",
+          image: window.syncedImageCache || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80",
           tags,
           modFeatures: features,
           previewUrl,
@@ -693,14 +664,63 @@
 
       localStorage.setItem('will01_games', JSON.stringify(window.adminGamesState));
       
-      // Simpan langsung ke Firebase Firestore jika terhubung
       if (updatedGame && typeof window.saveGameToFirestore === 'function') {
         window.saveGameToFirestore(updatedGame);
       }
 
       renderAdminTable();
       closeGameModal();
-      showToast(`Game Mod "${title}" berhasil disimpan ke Firebase!`, "success");
+      showToast(`Game Mod "${title}" berhasil disimpan!`, "success");
+    }
+
+    async function autoSyncPlayStoreData(url, forceNotify = false) {
+      if (!url || !url.trim()) {
+        showToast("Masukkan URL Google Play Store terlebih dahulu!", "info");
+        return;
+      }
+
+      const cleanUrl = url.trim();
+      showToast("Menghubungi Server API Play Store...", "info");
+
+      try {
+        const res = await fetch(`/api/playstore?url=${encodeURIComponent(cleanUrl)}`);
+        const json = await res.json();
+
+        if (json.status === 'success') {
+          if (json.title) document.getElementById('input-title').value = json.title;
+          if (json.version) {
+            document.getElementById('input-latest-version').value = json.version;
+            if (!document.getElementById('input-version').value) {
+              document.getElementById('input-version').value = json.version;
+            }
+          }
+          if (json.image) {
+            window.syncedImageCache = json.image;
+          }
+
+          showToast(`Server Sync Berhasil! ${json.title} (v${json.version})`, "success");
+        } else {
+          throw new Error(json.message);
+        }
+      } catch (err) {
+        console.warn("Server API fallback to client proxy:", err);
+        // Fallback Client Proxy
+        try {
+          const microRes = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(cleanUrl)}`);
+          const microData = await microRes.json();
+          if (microData.status === "success" && microData.data) {
+            if (microData.data.title) {
+              document.getElementById('input-title').value = microData.data.title.replace(/\s*-\s*Apps on Google Play.*/i, "").trim();
+            }
+            if (microData.data.image && microData.data.image.url) {
+              window.syncedImageCache = microData.data.image.url;
+            }
+          }
+          showToast("Sync via fallback berhasil!", "success");
+        } catch (e) {
+          showToast("Gagal mengambil data. Isi data secara manual.", "info");
+        }
+      }
     }
 
     function applyModUpdateOneClick(id) {
@@ -708,11 +728,9 @@
       if (game) {
         game.version = game.latestVersion;
         localStorage.setItem('will01_games', JSON.stringify(window.adminGamesState));
-        
         if (typeof window.saveGameToFirestore === 'function') {
           window.saveGameToFirestore(game);
         }
-
         renderAdminTable();
         showToast(`Mod "${game.title}" diperbarui ke versi v${game.version}`, "success");
       }
@@ -722,13 +740,11 @@
       if (confirm("Apakah Anda yakin ingin menghapus mod game ini?")) {
         window.adminGamesState = window.adminGamesState.filter(g => g.id !== id);
         localStorage.setItem('will01_games', JSON.stringify(window.adminGamesState));
-
         if (typeof window.deleteGameFromFirestore === 'function') {
           window.deleteGameFromFirestore(id);
         }
-
         renderAdminTable();
-        showToast("Mod Game berhasil dihapus dari Firebase!", "success");
+        showToast("Mod Game berhasil dihapus!", "success");
       }
     }
 
@@ -743,100 +759,11 @@
         else game.latestVersion = newVal.trim();
 
         localStorage.setItem('will01_games', JSON.stringify(window.adminGamesState));
-        
         if (typeof window.saveGameToFirestore === 'function') {
           window.saveGameToFirestore(game);
         }
-
         renderAdminTable();
         showToast("Nomor versi berhasil diperbarui!", "success");
-      }
-    }
-
-    async function autoSyncPlayStoreData(url, forceNotify = false) {
-      if (!url || !url.trim()) {
-        showToast("Masukkan URL Google Play Store terlebih dahulu!", "info");
-        return;
-      }
-
-      const cleanUrl = url.trim();
-      showToast("Mengambil metadata & versi dari Google Play Store...", "info");
-
-      try {
-        // 1. Ambil metadata cepat (Judul, Gambar, Deskripsi) via Microlink API
-        const microRes = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(cleanUrl)}`);
-        const microData = await microRes.json();
-
-        let title = "";
-        let image = "";
-        let description = "";
-
-        if (microData.status === "success" && microData.data) {
-          if (microData.data.title) {
-            title = microData.data.title
-              .replace(/\s*-\s*Apps on Google Play.*/i, "")
-              .replace(/\s*-\s*Aplikasi di Google Play.*/i, "")
-              .trim();
-          }
-          if (microData.data.image && microData.data.image.url) {
-            image = microData.data.image.url;
-          }
-          if (microData.data.description) {
-            description = microData.data.description;
-          }
-        }
-
-        // 2. Ambil HTML via AllOrigins CORS proxy untuk ekstrak softwareVersion
-        let detectedVersion = "";
-        try {
-          const htmlRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(cleanUrl + '&hl=en&gl=US')}`);
-          const htmlJson = await htmlRes.json();
-          const html = htmlJson.contents || "";
-
-          const verMatch = html.match(/"softwareVersion"\s*:\s*"([^"]+)"/i) ||
-                           html.match(/\[\[\["(\d+\.\d+[\.\d]*)"\]/) ||
-                           html.match(/Version\s*(\d+\.\d+[\.\d]*)/i);
-
-          if (verMatch && verMatch[1]) {
-            detectedVersion = verMatch[1].trim();
-          }
-        } catch (e) {
-          console.warn("Scrape HTML error:", e);
-        }
-
-        // Fallback pencarian nomor versi dari deskripsi/judul
-        if (!detectedVersion && (title || description)) {
-          const titleVerMatch = (title + " " + description).match(/v?(\d+\.\d+\.\d+|\d+\.\d+)/);
-          if (titleVerMatch) {
-            detectedVersion = titleVerMatch[1];
-          }
-        }
-
-        // Masukkan data hasil sync ke kolom-kolom Form Modal
-        if (title) document.getElementById('input-title').value = title;
-        if (detectedVersion) {
-          document.getElementById('input-latest-version').value = detectedVersion;
-          if (!document.getElementById('input-version').value) {
-            document.getElementById('input-version').value = detectedVersion;
-          }
-        }
-
-        // Deteksi Otomatis Tag Kategori
-        if (description || title) {
-          const keywords = ["Strategy", "Action", "RPG", "Tower Defense", "Idle", "Simulation", "Single Player", "Role Playing", "Anime", "PvP"];
-          const matchedTags = keywords.filter(k => 
-            (title + " " + description).toLowerCase().includes(k.toLowerCase())
-          );
-          if (matchedTags.length > 0) {
-            document.getElementById('input-tags').value = matchedTags.join(", ");
-          }
-        }
-
-        showToast(`Sync Berhasil! ${title ? title : ''} ${detectedVersion ? '(v' + detectedVersion + ')' : ''}`, "success");
-
-      } catch (err) {
-        console.error("Auto Sync Error:", err);
-        showToast("Gagal mengambil data Play Store. Silakan isi data secara manual.", "info");
       }
     }
 
@@ -847,28 +774,19 @@
         return;
       }
 
-      showToast("Memeriksa versi Play Store untuk semua game...", "info");
+      showToast("Memeriksa versi Play Store melalui Server API...", "info");
       let updatedCount = 0;
 
       for (let game of games) {
         if (!game.playstoreUrl) continue;
         try {
-          const htmlRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(game.playstoreUrl + '&hl=en&gl=US')}`);
-          const htmlJson = await htmlRes.json();
-          const html = htmlJson.contents || "";
-
-          const verMatch = html.match(/"softwareVersion"\s*:\s*"([^"]+)"/i) ||
-                           html.match(/\[\[\["(\d+\.\d+[\.\d]*)"\]/) ||
-                           html.match(/Version\s*(\d+\.\d+[\.\d]*)/i);
-
-          if (verMatch && verMatch[1]) {
-            const newVersion = verMatch[1].trim();
-            if (newVersion !== game.latestVersion) {
-              game.latestVersion = newVersion;
-              updatedCount++;
-              if (typeof window.saveGameToFirestore === 'function') {
-                window.saveGameToFirestore(game);
-              }
+          const res = await fetch(`/api/playstore?url=${encodeURIComponent(game.playstoreUrl)}`);
+          const json = await res.json();
+          if (json.status === 'success' && json.version && json.version !== game.latestVersion) {
+            game.latestVersion = json.version;
+            updatedCount++;
+            if (typeof window.saveGameToFirestore === 'function') {
+              window.saveGameToFirestore(game);
             }
           }
         } catch (e) {
@@ -878,12 +796,7 @@
 
       localStorage.setItem('will01_games', JSON.stringify(games));
       renderAdminTable();
-      
-      if (updatedCount > 0) {
-        showToast(`Ditemukan ${updatedCount} game dengan versi Play Store baru!`, "success");
-      } else {
-        showToast("Pemeriksaan selesai! Semua versi sudah up-to-date.", "success");
-      }
+      showToast(updatedCount > 0 ? `Ditemukan ${updatedCount} update baru!` : "Semua game up-to-date.", "success");
     }
 
     function openSettingsModal() {
