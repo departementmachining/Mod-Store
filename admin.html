@@ -233,6 +233,15 @@
       <form onsubmit="handleGameSubmit(event)" class="space-y-3">
         <input type="hidden" id="form-game-id">
 
+        <!-- Image Preview Card -->
+        <div id="image-preview-container" class="hidden items-center gap-3 p-2 bg-[#171d2e] border border-[#232b45] rounded-xl">
+          <img id="form-image-preview" src="" class="w-12 h-12 rounded-lg object-cover bg-slate-800 border border-[#2b3552]" alt="Preview">
+          <div>
+            <span class="text-[10px] font-bold text-emerald-400 uppercase block">Live Gambar HD Synced</span>
+            <span class="text-[10px] text-slate-400 block">Ikon game dari Play Store berhasil ditarik.</span>
+          </div>
+        </div>
+
         <div>
           <label class="block text-slate-400 mb-1">Judul Game Mod *</label>
           <input type="text" id="form-title" required placeholder="Desert Warrior Action RPG Game" class="w-full bg-[#161c2d] border border-[#232b45] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
@@ -263,7 +272,7 @@
 
         <div>
           <label class="block text-slate-400 mb-1">URL Banner / Icon Game (Gambar HD)</label>
-          <input type="url" id="form-image" placeholder="https://..." class="w-full bg-[#161c2d] border border-[#232b45] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+          <input type="url" id="form-image" oninput="updateImagePreview(this.value)" placeholder="https://..." class="w-full bg-[#161c2d] border border-[#232b45] rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
         </div>
 
         <div>
@@ -369,7 +378,6 @@
 
         const gamesRef = collection(db, 'games');
         
-        // Listen Realtime Firestore
         onSnapshot(gamesRef, (snapshot) => {
           const fetched = [];
           snapshot.forEach(docSnap => {
@@ -385,7 +393,6 @@
               statusElem.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Firebase Live (${fetched.length} Game Cloud)`;
             }
           } else {
-            console.log("Firestore cloud kosong. Mengunggah data awal ke cloud...");
             if (statusElem) {
               statusElem.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Sync Data ke Cloud...`;
             }
@@ -484,7 +491,6 @@
       const tbody = document.getElementById('admin-games-tbody');
       const games = window.adminGamesState || [];
 
-      // Update Statistics
       document.getElementById('stat-total').innerText = games.length;
       document.getElementById('stat-vip').innerText = games.filter(g => g.type === 'VIP').length;
       document.getElementById('stat-update').innerText = games.filter(g => g.latestVersion && g.latestVersion !== g.version).length;
@@ -572,6 +578,19 @@
       }).join('');
     };
 
+    function updateImagePreview(url) {
+      const container = document.getElementById('image-preview-container');
+      const img = document.getElementById('form-image-preview');
+      if (url && url.trim().length > 5) {
+        img.src = url;
+        container.classList.remove('hidden');
+        container.classList.add('flex');
+      } else {
+        container.classList.add('hidden');
+        container.classList.remove('flex');
+      }
+    }
+
     async function syncPlayStoreData() {
       const urlInput = document.getElementById('sync-playstore-url').value.trim();
       const btn = document.getElementById('btn-sync-action');
@@ -591,7 +610,6 @@
         let tags = [];
         let success = false;
 
-        // 1. Coba Serverless Backend Scraper (/api/playstore)
         try {
           const response = await fetch(`/api/playstore?url=${encodeURIComponent(urlInput)}`);
           if (response.ok) {
@@ -605,10 +623,9 @@
             }
           }
         } catch (serverErr) {
-          console.warn("Serverless API offline, beralih ke Fallback Client Proxy...", serverErr);
+          console.warn("Serverless API fallback to Client Proxy...", serverErr);
         }
 
-        // 2. Fallback Client-side Scraper jika Serverless API belum di-deploy / 404
         if (!success) {
           const targetUrl = urlInput + (urlInput.includes('?') ? '&' : '?') + 'hl=en&gl=US';
           const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
@@ -617,13 +634,11 @@
           if (proxyRes.ok) {
             const html = await proxyRes.text();
             
-            // Extract Title
             const titleMatch = html.match(/<meta property="og:title" content="([^"]+)"/i) || html.match(/<title>([^<]+)<\/title>/i);
             if (titleMatch) {
               title = titleMatch[1].replace(/\s*-\s*Apps on Google Play.*/i, '').replace(/\s*-\s*Aplikasi di Google Play.*/i, '').trim();
             }
 
-            // Extract Image
             const imgMatch = html.match(/<meta property="og:image" content="([^"]+)"/i) || html.match(/<img [^>]*src="([^"]+googleusercontent\.com[^"]+)"/i);
             if (imgMatch) {
               image = imgMatch[1].replace(/&amp;/g, '&');
@@ -632,11 +647,9 @@
               }
             }
 
-            // Extract Version
             const verMatch = html.match(/\[\[\["(\d+\.\d+[\.\d]*)"\]/) || html.match(/"softwareVersion"\s*:\s*"([^"]+)"/i);
             if (verMatch) version = verMatch[1];
 
-            // Extract Tags dari Chip Link Play Store
             const chipLinkRegexp = /<a[^>]*href="\/store\/apps\/(?:category|topic)[^"]*"[^>]*>[\s\S]*?<span[^>]*>([^<]+)<\/span>/gi;
             let matchChipLink;
             while ((matchChipLink = chipLinkRegexp.exec(html)) !== null) {
@@ -651,9 +664,7 @@
               }
             }
 
-            // Batasi presisi maksimal 6 tag
             tags = tags.slice(0, 6);
-
             if (title || version || image) success = true;
           }
         }
@@ -664,14 +675,17 @@
             document.getElementById('form-version').value = version;
             document.getElementById('form-latest-version').value = version;
           }
-          if (image) document.getElementById('form-image').value = image;
+          if (image) {
+            document.getElementById('form-image').value = image;
+            updateImagePreview(image);
+          }
           if (tags.length > 0) {
             document.getElementById('form-tags').value = tags.join(', ');
           }
           document.getElementById('form-playstore-url').value = urlInput;
-          showToast("Sync Play Store berhasil (Gambar, Versi & Tags terisi)!", "success");
+          showToast("Sync Play Store berhasil (Gambar HD & Versi terisi)!", "success");
         } else {
-          showToast("Gagal mengambil data dari Play Store. Silakan isi form manual.", "info");
+          showToast("Gagal mengambil data Play Store. Silakan isi form manual.", "info");
         }
 
       } catch (err) {
@@ -701,6 +715,7 @@
       document.getElementById('form-preview-url').value = '';
       document.getElementById('form-download-url').value = '';
       document.getElementById('sync-playstore-url').value = '';
+      updateImagePreview('');
 
       const modal = document.getElementById('game-modal');
       modal.classList.remove('hidden');
@@ -729,6 +744,7 @@
       document.getElementById('form-preview-url').value = game.previewUrl || '';
       document.getElementById('form-download-url').value = game.downloadUrl || '';
       document.getElementById('sync-playstore-url').value = game.playstoreUrl || '';
+      updateImagePreview(game.image || '');
 
       const modal = document.getElementById('game-modal');
       modal.classList.remove('hidden');
@@ -759,7 +775,7 @@
         latestVersion: document.getElementById('form-latest-version').value.trim() || document.getElementById('form-version').value.trim(),
         type: document.getElementById('form-type').value,
         playstoreUrl: document.getElementById('form-playstore-url').value.trim(),
-        image: document.getElementById('form-image').value.trim(),
+        image: document.getElementById('form-image').value.trim() || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80',
         tags: tags,
         modFeatures: document.getElementById('form-mod-features').value.trim(),
         monthlyPrice: document.getElementById('form-monthly-price').value.trim(),
@@ -886,6 +902,7 @@
     window.closeGameModal = closeGameModal;
     window.handleGameSubmit = handleGameSubmit;
     window.syncPlayStoreData = syncPlayStoreData;
+    window.updateImagePreview = updateImagePreview;
     window.quickUpdateVersion = quickUpdateVersion;
     window.deleteGame = deleteGame;
     window.openSettingsModal = openSettingsModal;
