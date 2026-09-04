@@ -38,49 +38,63 @@ module.exports = async (req, res) => {
     let image = '';
     let tags = [];
 
-    // 1. Ekstraksi dari JSON-LD (Metadata Utama Google)
+    // 1. Ekstraksi Judul Game
+    const ogTitleMatch = html.match(/<meta property="og:title" content="([^"]+)"/i) || html.match(/<title>([^<]+)<\/title>/i);
+    if (ogTitleMatch) {
+      title = ogTitleMatch[1].replace(/\s*-\s*Apps on Google Play.*/i, '').replace(/\s*-\s*Aplikasi di Google Play.*/i, '').trim();
+    }
+
+    // 2. Ekstraksi Gambar Ikon HD Google Play Store
+    const ogImageMatch = html.match(/<meta property="og:image" content="([^"]+)"/i);
+    const imgTagMatch = html.match(/<img [^>]*src="(https:\/\/play-lh\.googleusercontent\.com\/[^"]+)"/i) || html.match(/<img [^>]*src="(https:\/\/[^"]*googleusercontent\.com[^"]+)"/i);
+    
+    if (ogImageMatch && ogImageMatch[1]) {
+      image = ogImageMatch[1].replace(/&amp;/g, '&');
+    } else if (imgTagMatch && imgTagMatch[1]) {
+      image = imgTagMatch[1].replace(/&amp;/g, '&');
+    }
+
+    if (image && image.includes('googleusercontent.com')) {
+      image = image.split('=')[0] + '=s512';
+    }
+
+    // 3. Ekstraksi Versi Play Store (Multi-pattern Regex)
     const jsonLdMatch = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi);
     if (jsonLdMatch) {
       for (const block of jsonLdMatch) {
         try {
           const raw = block.replace(/<script type="application\/ld\+json">/i, '').replace(/<\/script>/i, '').trim();
           const parsed = JSON.parse(raw);
-          if (parsed['@type'] === 'SoftwareApplication' || parsed.softwareVersion || parsed.image || parsed.applicationCategory) {
-            title = parsed.name || title;
-            version = parsed.softwareVersion || version;
-            if (parsed.image) {
-              image = typeof parsed.image === 'string' ? parsed.image : (parsed.image.url || image);
-            }
-
-            // Ambik Kategori / Genre dari JSON-LD
-            if (parsed.applicationCategory) {
-              let cat = parsed.applicationCategory.replace(/^GAME_/i, '').replace(/_/g, ' ');
-              cat = cat.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-              if (cat && !tags.includes(cat)) tags.push(cat);
-            }
-            if (parsed.genre) {
-              if (Array.isArray(parsed.genre)) {
-                parsed.genre.forEach(g => { if (g && !tags.includes(g)) tags.push(g); });
-              } else if (typeof parsed.genre === 'string' && !tags.includes(parsed.genre)) {
-                tags.push(parsed.genre);
-              }
-            }
+          if (parsed.softwareVersion) {
+            version = parsed.softwareVersion;
           }
-        } catch (e) {
-          // ignore single json block parse error
+          if (!image && parsed.image) {
+            image = typeof parsed.image === 'string' ? parsed.image : (parsed.image.url || image);
+            if (image && image.includes('googleusercontent.com')) image = image.split('=')[0] + '=s512';
+          }
+        } catch (e) {}
+      }
+    }
+
+    if (!version) {
+      const verRegexes = [
+        /\[\[\["(\d+\.\d+[\.\d]*)"\]/i,
+        /"softwareVersion"\s*:\s*"([^"]+)"/i,
+        /\["(\d+\.\d+\.\d+[\.\d]*)"\]/i,
+        /\[\["(\d+\.\d+[\.\d]*)"\]/i,
+        /AF_initDataCallback[\s\S]*?\[\[\["(\d+\.\d+[\.\d]*)"/i
+      ];
+
+      for (const reg of verRegexes) {
+        const m = html.match(reg);
+        if (m && m[1] && m[1].length < 15) {
+          version = m[1];
+          break;
         }
       }
     }
 
-    // 2. Ekstraksi Genre / Tag / Topic Chips dari HTML Play Store
-    const genreRegexp = /itemprop="genre"[^>]*>([^<]+)</gi;
-    let matchGenre;
-    while ((matchGenre = genreRegexp.exec(html)) !== null) {
-      const g = matchGenre[1].trim();
-      if (g && !tags.includes(g)) tags.push(g);
-    }
-
-    // Ekstraksi khusus chip tag resmi (Category & Topic Chips) dari Play Store
+    // 4. Ekstraksi Tag Chips Asli Play Store
     const chipLinkRegexp = /<a[^>]*href="\/store\/apps\/(?:category|topic)[^"]*"[^>]*>[\s\S]*?<span[^>]*>([^<]+)<\/span>/gi;
     let matchChipLink;
     while ((matchChipLink = chipLinkRegexp.exec(html)) !== null) {
@@ -90,18 +104,13 @@ module.exports = async (req, res) => {
           chipText.length < 25 && 
           !chipText.includes('http') && 
           !chipText.toLowerCase().includes('google') &&
-          !chipText.toLowerCase().includes('aplikasi') &&
           !tags.includes(chipText)) {
         tags.push(chipText);
       }
     }
 
-    // Batasi maksimal 6 tag agar presisi sesuai chip asli Play Store
     tags = tags.slice(0, 6);
-
-    if (tags.length === 0) {
-      tags = ['RPG', 'Single player'];
-    }
+    if (tags.length === 0) tags = ['RPG', 'Single player'];
 
     return res.status(200).json({
       status: 'success',
