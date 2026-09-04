@@ -636,14 +636,23 @@
             const verMatch = html.match(/\[\[\["(\d+\.\d+[\.\d]*)"\]/) || html.match(/"softwareVersion"\s*:\s*"([^"]+)"/i);
             if (verMatch) version = verMatch[1];
 
-            // Extract Tags
-            const knownGenres = ['RPG', 'Monster', 'Single player', 'Roguelike', 'Immersive', 'Stylized', 'Bergaya unik', 'Action RPG', 'Strategy', 'Tower Defense', 'Idle RPG', 'Anime'];
-            knownGenres.forEach(kg => {
-              if (html.toLowerCase().includes(kg.toLowerCase())) {
-                const formatted = kg === 'Bergaya unik' ? 'Stylized' : kg;
-                if (!tags.includes(formatted)) tags.push(formatted);
+            // Extract Tags dari Chip Link Play Store
+            const chipLinkRegexp = /<a[^>]*href="\/store\/apps\/(?:category|topic)[^"]*"[^>]*>[\s\S]*?<span[^>]*>([^<]+)<\/span>/gi;
+            let matchChipLink;
+            while ((matchChipLink = chipLinkRegexp.exec(html)) !== null) {
+              const chipText = matchChipLink[1].trim();
+              if (chipText && 
+                  chipText.length > 1 && 
+                  chipText.length < 25 && 
+                  !chipText.includes('http') && 
+                  !chipText.toLowerCase().includes('google') &&
+                  !tags.includes(chipText)) {
+                tags.push(chipText);
               }
-            });
+            }
+
+            // Batasi presisi maksimal 6 tag
+            tags = tags.slice(0, 6);
 
             if (title || version || image) success = true;
           }
