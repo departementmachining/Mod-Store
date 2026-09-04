@@ -80,31 +80,44 @@ module.exports = async (req, res) => {
       if (g && !tags.includes(g)) tags.push(g);
     }
 
-    // Ekstraksisemua chip tag (Category, Topic, Sub-genre) dari link Play Store
-    const chipLinkRegexp = /<a[^>]*href="\/store\/apps\/(?:category|topic|stream|search)[^"]*"[^>]*>[\s\S]*?<span[^>]*>([^<]+)<\/span>/gi;
+    // Ekstraksi khusus chip tag resmi (Category & Topic Chips) dari Play Store
+    const chipLinkRegexp = /<a[^>]*href="\/store\/apps\/(?:category|topic)[^"]*"[^>]*>[\s\S]*?<span[^>]*>([^<]+)<\/span>/gi;
     let matchChipLink;
     while ((matchChipLink = chipLinkRegexp.exec(html)) !== null) {
       const chipText = matchChipLink[1].trim();
       if (chipText && 
           chipText.length > 1 && 
-          chipText.length < 30 && 
+          chipText.length < 25 && 
           !chipText.includes('http') && 
           !chipText.toLowerCase().includes('google') &&
+          !chipText.toLowerCase().includes('aplikasi') &&
           !tags.includes(chipText)) {
         tags.push(chipText);
       }
     }
 
-    // 3. Fallback Judul
-    if (!title) {
-      const titleMatch = html.match(/<meta property="og:title" content="([^"]+)"/i) || html.match(/<title>([^<]+)<\/title>/i);
-      if (titleMatch) {
-        title = titleMatch[1]
-          .replace(/\s*-\s*Apps on Google Play.*/i, '')
-          .replace(/\s*-\s*Aplikasi di Google Play.*/i, '')
-          .trim();
-      }
+    // Batasi maksimal 6 tag agar presisi sesuai chip asli Play Store
+    tags = tags.slice(0, 6);
+
+    if (tags.length === 0) {
+      tags = ['RPG', 'Single player'];
     }
+
+    return res.status(200).json({
+      status: 'success',
+      title: title || 'Game Mod',
+      version: version || '1.0.0',
+      image: image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80',
+      tags: tags
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      status: 'error',
+      message: error.message || 'Terjadi kesalahan saat membaca data Play Store'
+    });
+  }
+};
 
     // 4. Fallback Gambar Ikon / Banner Play Store (HD Resolution)
     if (!image) {
